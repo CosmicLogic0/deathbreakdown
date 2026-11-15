@@ -2,6 +2,7 @@
 # Starts a Minecraft server, waits for "Done (", stops it, and checks the log.
 # Usage: server-test.sh <server-dir> <expected-log-regex> -- <start command...>
 # Copied from CosmicLogic0/logiclib ci/server-test.sh. CHECK_NAMES (regex) = mods whose log lines must have no errors.
+# Added: CONSOLE_CMDS (lines typed into the console after start) and EXPECT_AFTER (regex that must then appear).
 set -u
 DIR="$1"; EXPECT="$2"; shift 3
 cd "$DIR"
@@ -18,6 +19,10 @@ for i in $(seq 1 900); do
   sleep 1
 done
 sleep 5
+if [ -n "${CONSOLE_CMDS:-}" ]; then
+  printf '%s\n' "$CONSOLE_CMDS" > console.in
+  sleep 8
+fi
 echo "stop" > console.in
 for i in $(seq 1 120); do kill -0 "$PID" 2>/dev/null || break; sleep 1; done
 kill "$PID" 2>/dev/null || true
@@ -31,4 +36,5 @@ CHECK_NAMES="${CHECK_NAMES:-logiclib|deathbreakdown|death breakdown}"
 if grep -Ei "$CHECK_NAMES" server.log | grep -Eiq "exception|error|could not load|failed"; then
   echo "::error::Mod problem in the log:"; grep -Ei "$CHECK_NAMES" server.log | grep -Ei "exception|error|could not load|failed"; exit 1
 fi
+if [ -n "${EXPECT_AFTER:-}" ] && ! grep -Eq "$EXPECT_AFTER" server.log; then echo "::error::Expected after console commands: $EXPECT_AFTER"; exit 1; fi
 echo "PASS: server started, mods loaded with no errors."
