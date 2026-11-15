@@ -1,0 +1,3 @@
+# CurseForge project ids (used by the publish workflows)
+mod 1808919
+paper 1808923
