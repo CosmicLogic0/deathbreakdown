@@ -1,4 +1,4 @@
-# Death Breakdown (Paper)
+# Death Breakdown Plugin
 
 **See exactly what killed you, on a vanilla client.**
 

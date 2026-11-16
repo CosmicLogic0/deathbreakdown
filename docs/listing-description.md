@@ -28,7 +28,7 @@ When you die, Death Breakdown shows a clean recap of the last 10 seconds. There'
 
 ## Paper servers
 
-There's a separate **Death Breakdown (Paper)** plugin. Players with a vanilla client get the same recap in chat, or as a book they can click open, and nobody needs to install a mod.
+There's a separate **Death Breakdown Plugin** for Paper. Players with a vanilla client get the same recap in chat, or as a book they can click open, and nobody needs to install a mod.
 
 ## Modpacks
 
