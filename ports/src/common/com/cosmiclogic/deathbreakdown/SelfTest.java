@@ -34,7 +34,10 @@ public final class SelfTest {
         StringBuilder report = new StringBuilder();
         try {
             ServerLevel level = out.getServer().overworld();
-            //#if MC >= 1.21.2
+            //#if MC >= 26.2
+            LivingEntity zombie = (LivingEntity) net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE
+                    .getValue(net.minecraft.resources.Identifier.withDefaultNamespace("zombie")).create(level, EntitySpawnReason.TRIGGERED);
+            //#elif MC >= 1.21.2
             LivingEntity zombie = EntityType.ZOMBIE.create(level, EntitySpawnReason.TRIGGERED);
             //#else
             LivingEntity zombie = EntityType.ZOMBIE.create(level);

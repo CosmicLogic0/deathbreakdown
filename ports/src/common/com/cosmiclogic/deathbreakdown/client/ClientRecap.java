@@ -12,7 +12,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.DeathScreen;
 import net.minecraft.client.gui.screens.Screen;
+//#if MC < 26.1
 import org.lwjgl.glfw.GLFW;
+//#endif
 
 import java.util.function.Consumer;
 
@@ -21,8 +23,13 @@ public final class ClientRecap {
     private ClientRecap() {}
 
     //#if MC >= 1.21.11
+    //#if MC >= 26.1
+    public static final KeyMapping OPEN_KEY = new KeyMapping("key.deathbreakdown.open", InputConstants.Type.values()[0],
+            InputConstants.KEY_K, KeyMapping.Category.register(net.minecraft.resources.Identifier.fromNamespaceAndPath(DeathBreakdown.MOD_ID, "main")));
+    //#else
     public static final KeyMapping OPEN_KEY = new KeyMapping("key.deathbreakdown.open", InputConstants.Type.values()[0],
             GLFW.GLFW_KEY_K, KeyMapping.Category.register(net.minecraft.resources.Identifier.fromNamespaceAndPath(DeathBreakdown.MOD_ID, "main")));
+    //#endif
     //#elif MC >= 1.21.9
     public static final KeyMapping OPEN_KEY = new KeyMapping("key.deathbreakdown.open", InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_K, KeyMapping.Category.register(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(DeathBreakdown.MOD_ID, "main")));
@@ -35,6 +42,16 @@ public final class ClientRecap {
     private static long autoOpened = Long.MIN_VALUE;
 
     public static Recap last() { return last; }
+
+    /** A chat line (overlay = above the hotbar). displayClientMessage was split in 26.1. */
+    static void say(Minecraft mc, net.minecraft.network.chat.Component c, boolean overlay) {
+        if (mc.player == null) return;
+        //#if MC >= 26.1
+        if (overlay) mc.player.sendOverlayMessage(c); else mc.player.sendSystemMessage(c);
+        //#else
+        mc.player.displayClientMessage(c, overlay);
+        //#endif
+    }
 
     /** The open screen (moved to mc.gui on 26.2+). */
     static Screen screen(Minecraft mc) {
@@ -62,7 +79,7 @@ public final class ClientRecap {
         boolean dead = mc.player == null || mc.player.isDeadOrDying() || screen(mc) instanceof DeathScreen;
         if (dead) {
             if (DeathBreakdown.config.chatSummary && mc.player != null) {
-                mc.player.displayClientMessage(Txt.lit("[" + DeathBreakdown.NAME + "] ").withStyle(ChatFormatting.GOLD)
+                say(mc, Txt.lit("[" + DeathBreakdown.NAME + "] ").withStyle(ChatFormatting.GOLD)
                         .append(Txt.lit(RecapText.summary(r, DeathBreakdown.config.hearts)).withStyle(ChatFormatting.WHITE))
                         .append(Txt.lit(" Press ").withStyle(ChatFormatting.GRAY))
                         .append(OPEN_KEY.getTranslatedKeyMessage().copy().withStyle(ChatFormatting.AQUA))
@@ -108,8 +125,7 @@ public final class ClientRecap {
     public static void open(Screen parent) {
         Minecraft mc = Minecraft.getInstance();
         if (last == null) {
-            if (mc.player != null) mc.player.displayClientMessage(
-                    Txt.lit("No death recap yet.").withStyle(ChatFormatting.GRAY), true);
+            say(mc, Txt.lit("No death recap yet.").withStyle(ChatFormatting.GRAY), true);
             return;
         }
         setScreen(mc, new RecapScreen(parent, last));

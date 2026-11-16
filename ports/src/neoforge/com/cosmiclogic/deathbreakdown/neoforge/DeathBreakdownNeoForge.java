@@ -55,9 +55,13 @@ public class DeathBreakdownNeoForge {
         float blocked = e.getBlockedDamage();
         // Raw = what actually reached the player before each layer. Built from the parts (instead of
         // getOriginalDamage) so partial hits during invulnerability frames aren't counted twice.
-        float raw = e.getNewDamage() + armor + enchants + effects + absorbed + blocked;
-        ServerTracker.recordExact(p, e.getSource(), raw, armor, enchants, effects, absorbed, blocked,
-                e.getNewDamage(), p.getHealth());
+        //#if MC >= 26.1
+        float dealt = e.getHealthDamage();
+        //#else
+        float dealt = e.getNewDamage();
+        //#endif
+        float raw = dealt + armor + enchants + effects + absorbed + blocked;
+        ServerTracker.recordExact(p, e.getSource(), raw, armor, enchants, effects, absorbed, blocked, dealt, p.getHealth());
     }
 
     private void onDeath(LivingDeathEvent e) {

@@ -1,7 +1,5 @@
 # Only these run (remove this file to run every version)
 forge 1.16.5
-forge 1.21.11
-neoforge 1.21.11
 forge26 26.3
 forge26 26.2
 forge26 26.1.2
