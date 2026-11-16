@@ -1,0 +1,41 @@
+// Death Breakdown for NeoForge on Minecraft 26.x (ModDevGradle). Same code as every other version: ../src/common +
+// ../src/neoforge with //#if blocks, plus the plain-Java core. Build setup copied from villager-reroller ports/neoforge-26.
+plugins {
+    id 'java'
+    id 'net.neoforged.moddev' version '2.0.148'
+}
+
+apply from: '../shared.gradle'
+def mcv = project.minecraft_version as String
+version = "${project.mod_version}+neoforge-${mcv}"
+group = 'com.cosmiclogic.deathbreakdown'
+base { archivesName = 'deathbreakdown' }
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+neoForge {
+    version = project.neo_version
+    runs { client { client() } }
+    mods { deathbreakdown { sourceSet(sourceSets.main) } }
+}
+
+def gen = layout.buildDirectory.dir('gen-src').get().asFile
+def ctx = [mc: mcv, FABRIC: false, FORGE: false, NEOFORGE: true, JAVA8: false, RELOCATE: false]
+tasks.register('dbSources') {
+    inputs.dir('../src'); inputs.dir('../../core/src/main/java'); inputs.property('ctx', ctx.toString()); outputs.dir(gen)
+    doLast { vrGenerate(['../src/neoforge', '../src/common', '../../core/src/main/java'], gen, ctx) }
+}
+def res = layout.buildDirectory.dir('gen-res')
+def mcRange = project.findProperty('mc_range') ?: "[${mcv}]"
+tasks.register('dbResources', Sync) {
+    from('../../common/src/main/resources') { include 'assets/**', 'deathbreakdown.png' }
+    from('src/res')
+    into res
+    inputs.property 'v', "${project.mod_version} ${mcRange}"
+    filesMatching('META-INF/neoforge.mods.toml') { expand 'version': project.mod_version, 'mcRange': mcRange }
+}
+sourceSets.main.java.srcDirs = [gen]
+sourceSets.main.resources.srcDirs = [res]
+compileJava.dependsOn 'dbSources'
+processResources.dependsOn 'dbResources'
+tasks.matching { it.name in ['sourcesJar', 'neoForgeIdeSync'] }.configureEach { dependsOn 'dbSources', 'dbResources' }
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.release = 25 }

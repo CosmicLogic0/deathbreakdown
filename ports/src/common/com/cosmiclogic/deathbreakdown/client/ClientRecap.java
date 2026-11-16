@@ -20,9 +20,12 @@ import java.util.function.Consumer;
 public final class ClientRecap {
     private ClientRecap() {}
 
-    //#if MC >= 1.21.9
+    //#if MC >= 1.21.11
+    public static final KeyMapping OPEN_KEY = new KeyMapping("key.deathbreakdown.open", InputConstants.Type.values()[0],
+            GLFW.GLFW_KEY_K, KeyMapping.Category.register(net.minecraft.resources.Identifier.fromNamespaceAndPath(DeathBreakdown.MOD_ID, "main")));
+    //#elif MC >= 1.21.9
     public static final KeyMapping OPEN_KEY = new KeyMapping("key.deathbreakdown.open", InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_K, KeyMapping.Category.MISC);
+            GLFW.GLFW_KEY_K, KeyMapping.Category.register(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(DeathBreakdown.MOD_ID, "main")));
     //#else
     public static final KeyMapping OPEN_KEY = new KeyMapping("key.deathbreakdown.open", InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_K, "key.categories.deathbreakdown");
@@ -33,13 +36,30 @@ public final class ClientRecap {
 
     public static Recap last() { return last; }
 
+    /** The open screen (moved to mc.gui on 26.2+). */
+    static Screen screen(Minecraft mc) {
+        //#if MC >= 26.2
+        return mc.gui.screen();
+        //#else
+        return mc.screen;
+        //#endif
+    }
+
+    static void setScreen(Minecraft mc, Screen s) {
+        //#if MC >= 26.2
+        mc.gui.setScreen(s);
+        //#else
+        mc.setScreen(s);
+        //#endif
+    }
+
     /** A recap arrived from the server. */
     public static void receive(String data) {
         Recap r = RecapCodec.decode(data);
         if (r == null) return;
         last = r;
         Minecraft mc = Minecraft.getInstance();
-        boolean dead = mc.player == null || mc.player.isDeadOrDying() || mc.screen instanceof DeathScreen;
+        boolean dead = mc.player == null || mc.player.isDeadOrDying() || screen(mc) instanceof DeathScreen;
         if (dead) {
             if (DeathBreakdown.config.chatSummary && mc.player != null) {
                 mc.player.displayClientMessage(Txt.lit("[" + DeathBreakdown.NAME + "] ").withStyle(ChatFormatting.GOLD)
@@ -48,9 +68,9 @@ public final class ClientRecap {
                         .append(OPEN_KEY.getTranslatedKeyMessage().copy().withStyle(ChatFormatting.AQUA))
                         .append(Txt.lit(" to see it again.").withStyle(ChatFormatting.GRAY)), false);
             }
-            if (DeathBreakdown.config.openOnDeath && mc.screen instanceof DeathScreen) autoOpen(mc.screen);
+            if (DeathBreakdown.config.openOnDeath && screen(mc) instanceof DeathScreen) autoOpen(screen(mc));
         } else {
-            open(mc.screen); // came from /deathbreakdown
+            open(screen(mc)); // came from /deathbreakdown
         }
     }
 
@@ -74,14 +94,14 @@ public final class ClientRecap {
         long age = Math.abs(System.currentTimeMillis() - last.timeMs);
         if (age > 60_000L) return; // an old recap, e.g. died again on a server without the mod
         autoOpened = last.timeMs;
-        Minecraft.getInstance().tell(() -> open(parent));
+        Minecraft.getInstance().execute(() -> open(parent));
     }
 
     /** The reopen key, checked on key presses while no screen is open. */
     public static void onKey() {
         Minecraft mc = Minecraft.getInstance();
         while (OPEN_KEY.consumeClick()) {
-            if (mc.screen == null) open(null);
+            if (screen(mc) == null) open(null);
         }
     }
 
@@ -92,6 +112,6 @@ public final class ClientRecap {
                     Txt.lit("No death recap yet.").withStyle(ChatFormatting.GRAY), true);
             return;
         }
-        mc.setScreen(new RecapScreen(parent, last));
+        setScreen(mc, new RecapScreen(parent, last));
     }
 }

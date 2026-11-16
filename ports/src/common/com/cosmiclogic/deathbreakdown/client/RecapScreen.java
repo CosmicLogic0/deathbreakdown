@@ -10,7 +10,9 @@ import com.cosmiclogic.deathbreakdown.core.RecapText.Col;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-//#if MC >= 1.20
+//#if MC >= 26.1
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+//#elif MC >= 1.20
 import net.minecraft.client.gui.GuiGraphics;
 //#else
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -51,7 +53,10 @@ public class RecapScreen extends Screen {
 
     /** The few drawing calls this screen uses. Colors are always full ARGB (newer versions hide alpha 0 text). */
     private static final class G {
-        //#if MC >= 1.20
+        //#if MC >= 26.1
+        final GuiGraphicsExtractor g;
+        G(GuiGraphicsExtractor g) { this.g = g; }
+        //#elif MC >= 1.20
         final GuiGraphics g;
         G(GuiGraphics g) { this.g = g; }
         //#else
@@ -69,7 +74,9 @@ public class RecapScreen extends Screen {
         }
 
         void text(Font f, String s, int x, int y, int rgb) {
-            //#if MC >= 1.20
+            //#if MC >= 26.1
+            g.text(f, s, x, y, 0xFF000000 | rgb, true);
+            //#elif MC >= 1.20
             g.drawString(f, s, x, y, 0xFF000000 | rgb);
             //#else
             f.drawShadow(pose, s, x, y, 0xFF000000 | rgb);
@@ -91,7 +98,13 @@ public class RecapScreen extends Screen {
         }
     }
 
-    //#if MC >= 1.20
+    //#if MC >= 26.1
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float pt) {
+        super.extractRenderState(g, mx, my, pt);
+        draw(new G(g), mx, my);
+    }
+    //#elif MC >= 1.20
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
         //#if MC < 1.20.2
@@ -257,7 +270,7 @@ public class RecapScreen extends Screen {
 
     @Override
     public void onClose() {
-        minecraft.setScreen(parent);
+        ClientRecap.setScreen(minecraft, parent);
     }
 
     @Override

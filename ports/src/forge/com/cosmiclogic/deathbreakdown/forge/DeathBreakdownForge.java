@@ -73,7 +73,11 @@ public class DeathBreakdownForge {
         //#endif
     }
 
+    //#if MC >= 26.1
+    public DeathBreakdownForge(net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext context) {
+    //#else
     public DeathBreakdownForge() {
+    //#endif
         DeathBreakdown.init(new DeathBreakdown.Platform() {
             @Override public String loaderName() { return "Forge"; }
             @Override public Path configDir() { return FMLPaths.CONFIGDIR.get(); }

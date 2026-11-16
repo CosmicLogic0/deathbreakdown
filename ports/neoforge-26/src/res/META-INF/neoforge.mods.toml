@@ -1,0 +1,31 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "MIT"
+issueTrackerURL = "https://github.com/CosmicLogic0/deathbreakdown/issues"
+
+[[mods]]
+modId = "deathbreakdown"
+version = "${version}"
+displayName = "Death Breakdown"
+authors = "CosmicLogic"
+displayURL = "https://www.curseforge.com/minecraft/mc-mods/death-breakdown"
+logoFile = "deathbreakdown.png"
+# Players without the mod can still join (they get the chat recap), so do not mark the server as incompatible.
+displayTest = "IGNORE_ALL_VERSION"
+description = """
+See exactly what killed you: every hit from your last 10 seconds, the damage, what your armor and enchantments blocked, and the final blow.
+"""
+
+[[dependencies.deathbreakdown]]
+modId = "neoforge"
+type = "required"
+versionRange = "[26,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.deathbreakdown]]
+modId = "minecraft"
+type = "required"
+versionRange = "${mcRange}"
+ordering = "NONE"
+side = "BOTH"

@@ -41,7 +41,9 @@ final class ForgeClient {
     }
 
     private static void registerKey() {
-        //#if MC >= 1.21.6
+        //#if MC >= 26.1
+        RegisterKeyMappingsEvent.BUS.addListener(e -> e.register(ClientRecap.OPEN_KEY));
+        //#elif MC >= 1.21.6
         RegisterKeyMappingsEvent.getBus(FMLJavaModLoadingContext.get().getModBusGroup()).addListener(e -> e.register(ClientRecap.OPEN_KEY));
         //#elif MC >= 1.19.1
         FMLJavaModLoadingContext.get().getModEventBus().addListener((RegisterKeyMappingsEvent e) -> e.register(ClientRecap.OPEN_KEY));

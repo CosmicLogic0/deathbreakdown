@@ -1,0 +1,52 @@
+// Death Breakdown for Forge on Minecraft 26.x (ForgeGradle 7). Same code as every other version: ../src/common +
+// ../src/forge with //#if blocks, plus the plain-Java core. Build setup copied from villager-reroller ports/forge-26.
+plugins {
+    id 'java'
+    id 'net.minecraftforge.gradle' version '[7.0.17,8)'
+}
+
+apply from: '../shared.gradle'
+def mcv = project.minecraft_version as String
+version = "${project.mod_version}+forge-${mcv}"
+group = 'com.cosmiclogic.deathbreakdown'
+base { archivesName = 'deathbreakdown' }
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+minecraft {
+    runs {
+        configureEach { workingDir = layout.projectDirectory.dir('run') }
+        register('client')
+    }
+}
+repositories {
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
+    mavenCentral()
+}
+dependencies {
+    implementation minecraft.dependency("net.minecraftforge:forge:${mcv}-${project.forge_version}")
+}
+
+def gen = layout.buildDirectory.dir('gen-src').get().asFile
+def ctx = [mc: mcv, FABRIC: false, FORGE: true, NEOFORGE: false, JAVA8: false, RELOCATE: false]
+tasks.register('dbSources') {
+    inputs.dir('../src'); inputs.dir('../../core/src/main/java'); inputs.property('ctx', ctx.toString()); outputs.dir(gen)
+    doLast { vrGenerate(['../src/forge', '../src/common', '../../core/src/main/java'], gen, ctx) }
+}
+def res = layout.buildDirectory.dir('gen-res')
+def mcRange = project.findProperty('mc_range') ?: "[${mcv}]"
+def forgeMajor = (project.forge_version.split('\\.')[0]) as int
+tasks.register('dbResources', Sync) {
+    from('../../common/src/main/resources') { include 'assets/**', 'deathbreakdown.png' }
+    from('src/res')
+    into res
+    inputs.property 'v', "${project.mod_version} ${mcRange} ${forgeMajor}"
+    filesMatching('META-INF/mods.toml') { expand 'version': project.mod_version, 'mcRange': mcRange, 'forgeMajor': forgeMajor }
+}
+sourceSets.main.java.srcDirs = [gen]
+sourceSets.main.resources.srcDirs = [res]
+compileJava.dependsOn 'dbSources'
+processResources.dependsOn 'dbResources'
+tasks.matching { it.name == 'sourcesJar' }.configureEach { dependsOn 'dbSources', 'dbResources' }
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.release = 25 }

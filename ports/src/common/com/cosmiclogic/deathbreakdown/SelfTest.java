@@ -10,7 +10,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 //#if MC >= 1.19.4
@@ -35,9 +35,9 @@ public final class SelfTest {
         try {
             ServerLevel level = out.getServer().overworld();
             //#if MC >= 1.21.2
-            Zombie zombie = EntityType.ZOMBIE.create(level, EntitySpawnReason.TRIGGERED);
+            LivingEntity zombie = EntityType.ZOMBIE.create(level, EntitySpawnReason.TRIGGERED);
             //#else
-            Zombie zombie = EntityType.ZOMBIE.create(level);
+            LivingEntity zombie = EntityType.ZOMBIE.create(level);
             //#endif
             check(zombie != null, "zombie created");
             zombie.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_SWORD));

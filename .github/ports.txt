@@ -8,3 +8,9 @@ forge 1.18.2
 forge 1.16.5
 neoforge 1.21.11
 neoforge 1.21.1
+forge26 26.3
+forge26 26.2
+forge26 26.1.2
+neoforge26 26.3
+neoforge26 26.2
+neoforge26 26.1.2
