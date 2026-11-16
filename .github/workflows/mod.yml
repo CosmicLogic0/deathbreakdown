@@ -77,7 +77,10 @@ jobs:
           fi
           find ../jars -name "deathbreakdown-${{ matrix.loader }}-${MC}-*.jar" ! -name "*-sources.jar" ! -name "*-javadoc.jar" -exec cp {} mods/ \;
           ls mods
-      - name: Start server and check Death Breakdown
+      - name: Start server, run selftest, check Death Breakdown
+        env:
+          CONSOLE_CMDS: "deathbreakdown selftest"
+          EXPECT_AFTER: "Death Breakdown selftest PASS"
         run: |
           chmod +x ci/server-test.sh server/run.sh
           LOADER_NAME=$([ "${{ matrix.loader }}" = "forge" ] && echo Forge || echo NeoForge)

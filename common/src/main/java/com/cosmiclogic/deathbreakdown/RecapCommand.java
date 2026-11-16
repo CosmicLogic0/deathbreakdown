@@ -10,6 +10,7 @@ import net.minecraft.server.level.ServerPlayer;
 /**
  * /deathbreakdown (alias /db): show your last recap again.
  * /deathbreakdown reload (ops): re-read deathbreakdown.properties.
+ * /deathbreakdown selftest (console): automatic feature test, run by CI.
  */
 public final class RecapCommand {
     private RecapCommand() {}
@@ -17,6 +18,7 @@ public final class RecapCommand {
     public static void register(CommandDispatcher<CommandSourceStack> d) {
         d.register(Commands.literal("deathbreakdown")
                 .executes(c -> show(c.getSource()))
+                .then(Commands.literal("selftest").requires(s -> s.hasPermission(4)).executes(c -> SelfTest.run(c.getSource())))
                 .then(Commands.literal("reload").requires(s -> s.hasPermission(2)).executes(c -> {
                     DeathBreakdown.reloadConfig();
                     c.getSource().sendSuccess(() -> Component.literal("Death Breakdown config reloaded."), true);
