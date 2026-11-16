@@ -26,11 +26,11 @@ configurations {
     }
 }
 
-// The plain-Java core (../core) is shared with the Paper plugin.
-sourceSets.main.java.srcDir(rootProject.file('../core/src/main/java'))
+// The plain-Java core (core/) is shared with the Paper plugin.
+sourceSets.main.java.srcDir(rootProject.file('core/src/main/java'))
 
 artifacts {
     commonJava file('src/main/java')
-    commonJava rootProject.file('../core/src/main/java')
+    commonJava rootProject.file('core/src/main/java')
     commonResources sourceSets.main.resources.sourceDirectories.singleFile
 }

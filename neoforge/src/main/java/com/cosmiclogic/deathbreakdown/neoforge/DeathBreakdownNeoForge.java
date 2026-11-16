@@ -47,16 +47,16 @@ public class DeathBreakdownNeoForge {
     /** NeoForge reports exactly how much each layer stopped. */
     private void onDamage(LivingDamageEvent.Post e) {
         if (!(e.getEntity() instanceof ServerPlayer p)) return;
-        float invul = e.getReduction(DamageContainer.Reduction.INVULNERABILITY);
-        float raw = e.getOriginalDamage() - invul;
-        ServerTracker.recordExact(p, e.getSource(), raw,
-                e.getReduction(DamageContainer.Reduction.ARMOR),
-                e.getReduction(DamageContainer.Reduction.ENCHANTMENTS),
-                e.getReduction(DamageContainer.Reduction.MOB_EFFECTS),
-                e.getReduction(DamageContainer.Reduction.ABSORPTION),
-                e.getBlockedDamage(),
-                e.getNewDamage(),
-                p.getHealth());
+        float armor = e.getReduction(DamageContainer.Reduction.ARMOR);
+        float enchants = e.getReduction(DamageContainer.Reduction.ENCHANTMENTS);
+        float effects = e.getReduction(DamageContainer.Reduction.MOB_EFFECTS);
+        float absorbed = e.getReduction(DamageContainer.Reduction.ABSORPTION);
+        float blocked = e.getBlockedDamage();
+        // Raw = what actually reached the player before each layer. Built from the parts (instead of
+        // getOriginalDamage) so partial hits during invulnerability frames aren't counted twice.
+        float raw = e.getNewDamage() + armor + enchants + effects + absorbed + blocked;
+        ServerTracker.recordExact(p, e.getSource(), raw, armor, enchants, effects, absorbed, blocked,
+                e.getNewDamage(), p.getHealth());
     }
 
     private void onDeath(LivingDeathEvent e) {
