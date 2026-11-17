@@ -10,6 +10,9 @@ on:
       dry_run:
         description: 'Dry run (check only)'
         default: 'true'
+      only:
+        description: 'all, or plugin (plugin file only)'
+        default: 'all'
       plugin_run:
         description: 'Plugin repo run id whose jar passed every Paper test'
         default: '44027372790'
@@ -46,4 +49,5 @@ jobs:
         env:
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
           DRY_RUN: ${{ inputs.dry_run }}
+          ONLY: ${{ inputs.only }}
         run: python3 ci/curseforge_upload.py

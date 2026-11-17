@@ -101,7 +101,7 @@ def main():
     if not TOKEN: raise SystemExit('CURSEFORGE_TOKEN is not set')
     problems, plan = [], []
     mc = versions('minecraft.curseforge.com')
-    for name, loaders, mcs, java in MOD_FILES:
+    for name, loaders, mcs, java in ([] if os.environ.get('ONLY') == 'plugin' else MOD_FILES):
         path = f'jars/deathbreakdown-{VERSION}+{name}.jar'
         if not os.path.exists(path): problems.append(f'missing {path}'); continue
         ids, names = tags(mc, mcs, loaders, java, problems, name)
@@ -124,17 +124,18 @@ def main():
         else:
             ids, names = [], []
             for v in PAPER_VERSIONS:
-                hit = find(bv, v, is_mc) or find(bv, v)
-                if not hit:  # Bukkit lists versions like "1.21" or "1.21.1"; fall back to the major line
+                bk = lambda x: x[3] == 'Bukkit'  # only the current "Bukkit" tag type is accepted for uploads
+                hit = find(bv, v, bk)
+                if not hit:  # older lines may only be listed as "1.12" etc.
                     major = '.'.join(v.split('.')[:2])
-                    hit = find(bv, major, is_mc) or find(bv, major)
+                    hit = find(bv, major, bk)
                 if hit and hit[0] not in ids: ids.append(hit[0]); names.append(f'{hit[1]} [{hit[3] or hit[2]}]')
                 elif not hit: print(f'  note: plugin: no Bukkit tag for {v}')
             if not ids:
                 problems.append('plugin: no Bukkit version tags found')
                 print(f'  {host} has {len(bv)} versions, e.g.: ' + '; '.join(f'{v[1]} [{v[3] or v[2]}]' for v in bv[-60:]))
-            for v in PAPER_VERSIONS[:3]:
-                print(f'  all Bukkit entries named {v}: ' + '; '.join(f'id {x[0]} [{x[3]}]' for x in bv if x[1] == v))
+            bk_names = sorted({x[1] for x in bv if x[3] == 'Bukkit' and (x[1].startswith('1.12') or x[1].startswith('1.16'))})
+            print('  Bukkit-type tags for 1.12/1.16: ' + ', '.join(bk_names))
             meta = {'changelog': PLUGIN_CHANGELOG, 'changelogType': 'markdown',
                     'displayName': f'Death Breakdown Plugin {VERSION} (Paper 1.12.2-26.3)', 'gameVersions': ids,
                     'releaseType': 'release',
