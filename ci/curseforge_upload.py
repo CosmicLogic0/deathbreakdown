@@ -113,9 +113,11 @@ def main():
     ppath = 'plugin/deathbreakdown-paper.jar'
     if os.path.exists(ppath):
         host, bv = None, None
-        for h in ['bukkit.curseforge.com', 'dev.bukkit.org']:
+        for h in ['dev.bukkit.org', 'bukkit.curseforge.com']:
             try:
-                bv = versions(h); host = h; break
+                got = versions(h)
+                print(f'  {h}: {len(got)} versions')
+                if len(got) > 10: bv = got; host = h; break
             except Exception as e:
                 print(f'  {h}: {e}')
         if not host: problems.append('no bukkit API host answered')
