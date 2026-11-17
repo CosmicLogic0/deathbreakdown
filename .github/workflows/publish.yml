@@ -1,0 +1,49 @@
+# Uploads the jars that passed every test to CurseForge. Run by hand only (never on push).
+# Mod jars: the "port-results" branch of a fully green all-versions run. Plugin jar: the tested
+# artifact of a green "Build and test" run in CosmicLogic0/deathbreakdown-plugin.
+# dry_run=true (default) only checks the tags and prints what it would upload.
+name: Publish to CurseForge
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (check only)'
+        default: 'true'
+      plugin_run:
+        description: 'Plugin repo run id whose jar passed every Paper test'
+        default: '44027372790'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get the tested mod jars (must be an all-PASS run)
+        run: |
+          git fetch --depth=1 origin port-results
+          git show origin/port-results:SUMMARY | tee summary.txt
+          test "$(wc -l < summary.txt)" -eq 16
+          if grep -v ': PASS ' summary.txt; then echo "::error::not every combo passed"; exit 1; fi
+          echo "jars from commit $(git show origin/port-results:COMMIT), run $(git show origin/port-results:RUN)"
+          mkdir jars && git archive origin/port-results jars | tar -x
+          ls -la jars
+      - name: Get the tested plugin jar
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          R=${{ inputs.plugin_run }}
+          C=$(gh run view "$R" -R CosmicLogic0/deathbreakdown-plugin --json conclusion -q .conclusion); echo "plugin run $R: $C"
+          test "$C" = success
+          gh run download "$R" -R CosmicLogic0/deathbreakdown-plugin -n deathbreakdown-paper-jar -D plugin-dl
+          mkdir plugin && cp "$(ls plugin-dl/*.jar | grep -v -- -sources | head -1)" plugin/deathbreakdown-paper.jar
+          ls -la plugin-dl plugin
+      - name: Upload
+        env:
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: python3 ci/curseforge_upload.py
