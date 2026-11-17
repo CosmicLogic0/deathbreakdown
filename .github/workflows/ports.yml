@@ -33,10 +33,10 @@ jobs:
           inc = []
           for loader, mc in [(r[0], r[1]) for r in rows('.github/ports.txt')]:
               if only and (loader, mc) not in only: continue
-              d = {'forge': 'ports/forge', 'neoforge': 'ports/forge', 'neoforge120': 'ports/forge', 'forge26': 'ports/forge-26', 'neoforge26': 'ports/neoforge-26'}[loader]
+              d = {'forge': 'ports/forge', 'neoforge': 'ports/forge', 'neoforge120': 'ports/forge', 'forge26': 'ports/forge-26', 'neoforge26': 'ports/neoforge-26', 'forge112': 'ports/forge-1.12.2'}[loader]
               def v(s): return [int(x) for x in s.split('.')] + [0] * (3 - len(s.split('.')))
               j = 25 if loader.endswith('26') else (21 if v(mc) >= [1, 20, 5] else 17 if v(mc) >= [1, 18] else 8)
-              lid = 'neoforge' if loader == 'neoforge120' else loader.replace('26', '')
+              lid = 'neoforge' if loader == 'neoforge120' else 'forge' if loader == 'forge112' else loader.replace('26', '')
               inc.append({'loader': loader, 'mc': mc, 'dir': d, 'java': j, 'id': f"{lid}-{mc}"})
           print('matrix=' + json.dumps({'include': inc}))
           PY
@@ -69,6 +69,7 @@ jobs:
             forge) echo "args=-Pforge_version=$FORGE -Parch_loom_version=$LOOM" >> "$GITHUB_OUTPUT"; echo "lv=$mc-$FORGE" >> "$GITHUB_OUTPUT"; echo "Forge $FORGE, Loom $LOOM" ;;
             neoforge120) N=$(curl -s https://maven.neoforged.net/releases/net/neoforged/forge/maven-metadata.xml | grep -oE "<version>$mc-[^<]*</version>" | sed 's/<[^>]*>//g' | sort -V | tail -1)
                 echo "args=-Pforge_version=$FORGE -Parch_loom_version=$LOOM" >> "$GITHUB_OUTPUT"; echo "lv=$N" >> "$GITHUB_OUTPUT"; echo "Forge jar $FORGE tested on NeoForge $N" ;;
+            forge112) echo "lv=$mc-$FORGE" >> "$GITHUB_OUTPUT"; echo "Forge $FORGE (RetroFuturaGradle build)" ;;
             forge26) echo "args=-Pforge_version=$FORGE" >> "$GITHUB_OUTPUT"; echo "lv=$mc-$FORGE" >> "$GITHUB_OUTPUT"; echo "Forge $FORGE" ;;
             neoforge) P=$(echo "$mc" | sed 's/^1\.//'); case "$P" in *.*) ;; *) P="$P.0" ;; esac
                 F=$(curl -s https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml | grep -oE "<version>$P\.[0-9]+(-beta)?</version>" | sed 's/<[^>]*>//g' | sort -V | tail -1)

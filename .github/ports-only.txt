@@ -1,3 +1,1 @@
-# Only these run (remove this file to run every version)
-forge 1.16.5
-neoforge120 1.20.1
+forge112 1.12.2
