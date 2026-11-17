@@ -128,7 +128,9 @@ def main():
                     hit = find(bv, major)
                 if hit and hit[0] not in ids: ids.append(hit[0]); names.append(hit[1])
                 elif not hit: print(f'  note: plugin: no Bukkit tag for {v}')
-            if not ids: problems.append('plugin: no Bukkit version tags found')
+            if not ids:
+                problems.append('plugin: no Bukkit version tags found')
+                print(f'  {host} has {len(bv)} versions, e.g.: ' + '; '.join(f'{v[1]} [{v[3] or v[2]}]' for v in bv[-60:]))
             meta = {'changelog': PLUGIN_CHANGELOG, 'changelogType': 'markdown',
                     'displayName': f'Death Breakdown Plugin {VERSION} (Paper 1.12.2-26.3)', 'gameVersions': ids,
                     'releaseType': 'release',
