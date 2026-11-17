@@ -12,7 +12,6 @@ final class NeoForgeClient {
     private NeoForgeClient() {}
 
     static void init(IEventBus modBus) {
-        ClientRecap.startup(net.neoforged.fml.loading.FMLPaths.GAMEDIR.get());
         modBus.addListener((RegisterKeyMappingsEvent e) -> e.register(ClientRecap.OPEN_KEY));
         NeoForge.EVENT_BUS.addListener((InputEvent.Key e) -> ClientRecap.onKey());
         NeoForge.EVENT_BUS.addListener((ScreenEvent.Init.Post e) -> ClientRecap.onScreenInit(e.getScreen(), e::addListener));

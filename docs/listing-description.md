@@ -62,4 +62,4 @@ Death Breakdown is free. Donations keep the mod up to date with fixes, new Minec
 ---
 
 ## 🎮 Play on the creator's server
-**Logic Survival** (`play.logicsurvival.fyi`) is the survival server run by the maker of this mod. **Heads up:** this mod adds Logic Survival to the **end** of your Multiplayer server list **one time only**. If you delete it, it won't come back, not from this mod and not from any of my other mods. Don't want it at all? Set `addCreatorServer = false` in the config. Modpack makers can turn it off the same way.
+**Logic Survival** (`play.logicsurvival.fyi`) is the survival server run by the maker of this mod. Death Breakdown does **not** add it (or anything else) to your Multiplayer server list. Add it yourself if you'd like to visit.

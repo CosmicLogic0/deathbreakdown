@@ -24,7 +24,6 @@ final class ForgeClient {
     private ForgeClient() {}
 
     static void init() {
-        ClientRecap.startup(net.minecraftforge.fml.loading.FMLPaths.GAMEDIR.get());
         registerKey();
         //#if MC >= 1.21.6
         InputEvent.Key.BUS.addListener(e -> ClientRecap.onKey());
