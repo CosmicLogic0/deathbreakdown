@@ -12,6 +12,7 @@ final class ForgeClient {
     private ForgeClient() {}
 
     static void init(IEventBus modBus) {
+        ClientRecap.startup(net.minecraftforge.fml.loading.FMLPaths.GAMEDIR.get());
         modBus.addListener((RegisterKeyMappingsEvent e) -> e.register(ClientRecap.OPEN_KEY));
         MinecraftForge.EVENT_BUS.addListener((InputEvent.Key e) -> ClientRecap.onKey());
         MinecraftForge.EVENT_BUS.addListener((ScreenEvent.Init.Post e) -> ClientRecap.onScreenInit(e.getScreen(), e::addListener));

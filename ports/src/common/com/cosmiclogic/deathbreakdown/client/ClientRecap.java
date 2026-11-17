@@ -43,6 +43,12 @@ public final class ClientRecap {
 
     public static Recap last() { return last; }
 
+    /** Client start: the creator's server, exactly as the Server Promotion Policy says (once, at the end, can be turned off). */
+    public static void startup(java.nio.file.Path gameDir) {
+        DeathBreakdown.LOG.info("Logic Survival server list: {}", com.cosmiclogic.deathbreakdown.core.CreatorServer.run(
+                gameDir, DeathBreakdown.config.addCreatorServer, DeathBreakdown.MOD_ID));
+    }
+
     /** A chat line (overlay = above the hotbar). displayClientMessage was split in 26.1. */
     static void say(Minecraft mc, net.minecraft.network.chat.Component c, boolean overlay) {
         if (mc.player == null) return;

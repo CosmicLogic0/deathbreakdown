@@ -1,35 +1,65 @@
-# Death Breakdown
+![Death Breakdown](https://raw.githubusercontent.com/CosmicLogic0/deathbreakdown/main/docs/images/header.png)
 
-**See exactly what killed you.**
+**Stop guessing. See exactly what killed you.**
 
-When you die, Death Breakdown shows a clean recap of the last 10 seconds. There's one row per hit, so you can see what really happened instead of guessing from a one-line death message.
+You die, and the death message says "slain by Skeleton". But you were also on fire, fell off a ledge and got clipped by a creeper first. What actually happened? **Death Breakdown shows you, hit by hit.**
 
-## What the recap shows
+---
 
-- **Who or what hit you**: the mob, player, projectile, block or effect
-- **Damage type**: melee, arrow, fire, lava, fall, explosion, magic, poison, wither, drowning and more, including modded damage
-- **Damage**: how much each hit took off
-- **Blocked**: how much your **armor** stopped and how much your **enchantments** (Protection, Blast/Fire/Projectile Protection, Feather Falling) stopped, shown separately in the same row
-- **Final blow**: highlighted, so you can tell when the last hit wasn't the real reason you died
+🧩 **Works with modded mobs, weapons and damage types too.**
 
-## Features
+## 🔥 What it does
 
-- **Keybind to reopen** your last recap any time (rebindable in Controls)
-- **Config**: the time window (default 10 seconds) and which columns are shown
-- **Small and modpack friendly**: no new blocks, items or world data, and modded mobs and damage types work as they are
+### 💀 A recap the moment you die
+A clean screen opens on the death screen with **every hit from your last 10 seconds**, oldest at the top and the **final blow** highlighted at the bottom.
 
-## Loaders and versions
+### 🗡️ Who or what hit you
+The mob, player, arrow, block or effect, plus the **weapon** they were holding ("Zombie (Iron Sword)", "Skeleton (Arrow)").
 
-| | Forge | NeoForge | Paper |
-|---|---|---|---|
-| 26.3, 26.2, 26.1.2 | ✅ | ✅ | ✅ |
-| 1.21.11, 1.21.1 | ✅ | ✅ | ✅ |
-| 1.20.1, 1.19.2, 1.18.2, 1.16.5, 1.12.2 | ✅ | | ✅ |
+### 🔥 What kind of damage
+Melee, arrow, fire, lava, fall, explosion, magic, poison, wither, drowning and more. Modded damage gets a readable name too.
 
-## Paper servers
+### 🛡️ What your armor and enchantments blocked
+Every row shows how much your **armor** stopped and how much your **enchantments** (Protection, Blast/Fire/Projectile Protection, Feather Falling) stopped, **separately**. Resistance, absorption hearts and shields get their own column.
 
-There's a separate **Death Breakdown Plugin** for Paper. Players with a vanilla client get the same recap in chat, or as a book they can click open, and nobody needs to install a mod.
+### ❤️ How close it was
+See your health after every hit, and a one-line summary like *"Killed by Skeleton (Bow): 11❤ in 4 hits. Stopped: armor 3❤, enchants 1❤. Most damage: Lava."*
 
-## Modpacks
+### 🔁 Open it again anytime
+Press **K** to reopen your last recap, or use the **☠ Death Breakdown** button on the death screen.
 
-You're welcome to include it in any modpack. MIT license.
+### 🖥️ Works on servers
+Put it on the server too and players with the mod get the full screen. Players without it can still join and get the recap in chat, with every hit in the hover text.
+
+### 💾 It remembers
+Your settings are saved in `config/deathbreakdown.properties`: the time window (1–60 seconds), which columns you see, hearts or health points, and whether it opens by itself.
+
+## 🎮 Controls
+| Key | What it does |
+|---|---|
+| **K** | Open your last death recap |
+| **Scroll** | Scroll when there are lots of hits |
+| **Hover a row** | Every detail about that hit |
+
+Change the key in Options → Controls → Key Binds. Commands: `/deathbreakdown` (or `/db`) shows your last recap, `/deathbreakdown reload` reloads the config (ops).
+
+## 📦 Requirements
+- **Forge:** Minecraft 1.12.2 to 26.3
+- **NeoForge:** Minecraft 1.20.1 to 26.3
+- **Paper:** get the plugin version here: [Death Breakdown Plugin](https://www.curseforge.com/minecraft/bukkit-plugins/death-breakdown-plugin)
+- Pick the file for your Minecraft version and loader on the Files tab.
+- Install it on the **client** for the recap screen, and on the **server** so the server can record your hits. Singleplayer just works.
+
+Source and bug reports: https://github.com/CosmicLogic0/deathbreakdown
+
+---
+
+## ❤️ Support the mod
+![Help keep this mod alive](https://raw.githubusercontent.com/CosmicLogic0/deathbreakdown/main/docs/images/donate.png)
+
+Death Breakdown is free. Donations keep the mod up to date with fixes, new Minecraft versions and new features. [Donate with PayPal](https://www.paypal.com/paypalme/DylanEMason) - any amount helps. Thank you!
+
+---
+
+## 🎮 Play on the creator's server
+**Logic Survival** (`play.logicsurvival.fyi`) is the survival server run by the maker of this mod. **Heads up:** this mod adds Logic Survival to the **end** of your Multiplayer server list **one time only**. If you delete it, it won't come back, not from this mod and not from any of my other mods. Don't want it at all? Set `addCreatorServer = false` in the config. Modpack makers can turn it off the same way.

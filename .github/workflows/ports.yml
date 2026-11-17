@@ -33,10 +33,11 @@ jobs:
           inc = []
           for loader, mc in [(r[0], r[1]) for r in rows('.github/ports.txt')]:
               if only and (loader, mc) not in only: continue
-              d = {'forge': 'ports/forge', 'neoforge': 'ports/forge', 'forge26': 'ports/forge-26', 'neoforge26': 'ports/neoforge-26'}[loader]
+              d = {'forge': 'ports/forge', 'neoforge': 'ports/forge', 'neoforge120': 'ports/forge', 'forge26': 'ports/forge-26', 'neoforge26': 'ports/neoforge-26'}[loader]
               def v(s): return [int(x) for x in s.split('.')] + [0] * (3 - len(s.split('.')))
               j = 25 if loader.endswith('26') else (21 if v(mc) >= [1, 20, 5] else 17 if v(mc) >= [1, 18] else 8)
-              inc.append({'loader': loader, 'mc': mc, 'dir': d, 'java': j, 'id': f"{loader.replace('26', '')}-{mc}"})
+              lid = 'neoforge' if loader == 'neoforge120' else loader.replace('26', '')
+              inc.append({'loader': loader, 'mc': mc, 'dir': d, 'java': j, 'id': f"{lid}-{mc}"})
           print('matrix=' + json.dumps({'include': inc}))
           PY
 
@@ -66,6 +67,8 @@ jobs:
           FORGE=$(curl -s https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml | grep -o "<version>$mc-[^<]*</version>" | sed "s/<[^>]*>//g; s/^$mc-//" | sort -V | tail -1)
           case "${{ matrix.loader }}" in
             forge) echo "args=-Pforge_version=$FORGE -Parch_loom_version=$LOOM" >> "$GITHUB_OUTPUT"; echo "lv=$mc-$FORGE" >> "$GITHUB_OUTPUT"; echo "Forge $FORGE, Loom $LOOM" ;;
+            neoforge120) N=$(curl -s https://maven.neoforged.net/releases/net/neoforged/forge/maven-metadata.xml | grep -oE "<version>$mc-[^<]*</version>" | sed 's/<[^>]*>//g' | sort -V | tail -1)
+                echo "args=-Pforge_version=$FORGE -Parch_loom_version=$LOOM" >> "$GITHUB_OUTPUT"; echo "lv=$N" >> "$GITHUB_OUTPUT"; echo "Forge jar $FORGE tested on NeoForge $N" ;;
             forge26) echo "args=-Pforge_version=$FORGE" >> "$GITHUB_OUTPUT"; echo "lv=$mc-$FORGE" >> "$GITHUB_OUTPUT"; echo "Forge $FORGE" ;;
             neoforge) P=$(echo "$mc" | sed 's/^1\.//'); case "$P" in *.*) ;; *) P="$P.0" ;; esac
                 F=$(curl -s https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml | grep -oE "<version>$P\.[0-9]+(-beta)?</version>" | sed 's/<[^>]*>//g' | sort -V | tail -1)
@@ -101,6 +104,8 @@ jobs:
           case "${{ matrix.loader }}" in
             forge*) curl -fsSL -o installer.jar "https://maven.minecraftforge.net/net/minecraftforge/forge/$LV/forge-$LV-installer.jar"
                     java -jar installer.jar --installServer . > install.log 2>&1 || (tail -40 install.log; exit 1); NAME=Forge ;;
+            neoforge120) curl -fsSL -o installer.jar "https://maven.neoforged.net/releases/net/neoforged/forge/$LV/forge-$LV-installer.jar"
+                    java -jar installer.jar --installServer . > install.log 2>&1 || (tail -40 install.log; exit 1); NAME=Forge ;;
             neoforge*) curl -fsSL -o installer.jar "https://maven.neoforged.net/releases/net/neoforged/neoforge/$LV/neoforge-$LV-installer.jar"
                     java -jar installer.jar --install-server . > install.log 2>&1 || (tail -40 install.log; exit 1); NAME=NeoForge ;;
           esac
@@ -114,6 +119,8 @@ jobs:
         if: always() && steps.jar.outputs.file != ''
         run: |
           mkdir -p run/mods && cp "${{ steps.jar.outputs.file }}" run/mods/
+          # mc-runtime-test starts the game with $JAVA_HOME (its java input is ignored), so use this version's Java
+          echo "JAVA_HOME=$(eval echo \$JAVA_HOME_${{ matrix.java }}_X64)" >> "$GITHUB_ENV"
       - name: Client test (real game)
         id: client
         if: always() && steps.jar.outputs.file != ''
@@ -121,7 +128,7 @@ jobs:
         with:
           mc: ${{ matrix.mc }}
           modloader: ${{ startsWith(matrix.loader, 'neo') && 'neoforge' || 'forge' }}
-          mc-runtime-test: ${{ startsWith(matrix.loader, 'neo') && 'neoforge' || 'forge' }}
+          mc-runtime-test: ${{ (startsWith(matrix.loader, 'neo') && matrix.loader != 'neoforge120') && 'neoforge' || 'forge' }}
           java: ${{ matrix.java }}
       - name: Write the result
         if: always()

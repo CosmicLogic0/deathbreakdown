@@ -28,6 +28,12 @@ public final class ClientRecap {
 
     public static Recap last() { return last; }
 
+    /** Client start: the creator's server, exactly as the Server Promotion Policy says (once, at the end, can be turned off). */
+    public static void startup(java.nio.file.Path gameDir) {
+        DeathBreakdown.LOG.info("Logic Survival server list: {}", com.cosmiclogic.deathbreakdown.core.CreatorServer.run(
+                gameDir, DeathBreakdown.config.addCreatorServer, DeathBreakdown.MOD_ID));
+    }
+
     /** A recap arrived from the server. */
     public static void receive(String data) {
         Recap r = RecapCodec.decode(data);
