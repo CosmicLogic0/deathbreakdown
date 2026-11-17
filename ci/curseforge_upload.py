@@ -49,7 +49,7 @@ def versions(host):
     out = []
     for v in get(f'https://{host}/api/game/versions'):
         t = types.get(v['gameVersionTypeID'], {})
-        out.append((v['id'], v['name'], t.get('slug', ''), t.get('name', '')))
+        out.append((v['id'], v['name'], t.get('slug', ''), t.get('name', '') or f"type {v['gameVersionTypeID']}"))
     return out
 
 
@@ -133,6 +133,8 @@ def main():
             if not ids:
                 problems.append('plugin: no Bukkit version tags found')
                 print(f'  {host} has {len(bv)} versions, e.g.: ' + '; '.join(f'{v[1]} [{v[3] or v[2]}]' for v in bv[-60:]))
+            for v in PAPER_VERSIONS[:3]:
+                print(f'  all Bukkit entries named {v}: ' + '; '.join(f'id {x[0]} [{x[3]}]' for x in bv if x[1] == v))
             meta = {'changelog': PLUGIN_CHANGELOG, 'changelogType': 'markdown',
                     'displayName': f'Death Breakdown Plugin {VERSION} (Paper 1.12.2-26.3)', 'gameVersions': ids,
                     'releaseType': 'release',
