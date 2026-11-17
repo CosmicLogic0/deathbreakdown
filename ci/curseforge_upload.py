@@ -124,11 +124,11 @@ def main():
         else:
             ids, names = [], []
             for v in PAPER_VERSIONS:
-                hit = find(bv, v)
+                hit = find(bv, v, is_mc) or find(bv, v)
                 if not hit:  # Bukkit lists versions like "1.21" or "1.21.1"; fall back to the major line
                     major = '.'.join(v.split('.')[:2])
-                    hit = find(bv, major)
-                if hit and hit[0] not in ids: ids.append(hit[0]); names.append(hit[1])
+                    hit = find(bv, major, is_mc) or find(bv, major)
+                if hit and hit[0] not in ids: ids.append(hit[0]); names.append(f'{hit[1]} [{hit[3] or hit[2]}]')
                 elif not hit: print(f'  note: plugin: no Bukkit tag for {v}')
             if not ids:
                 problems.append('plugin: no Bukkit version tags found')
