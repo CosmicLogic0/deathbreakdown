@@ -1,0 +1,17 @@
+FAIL build=failure server=skipped client=skipped (1.19.2-43.5.2)
+* What went wrong:
+A problem occurred configuring root project 'deathbreakdown-forge'.
+> Could not isolate value dev.architectury.loom.forge.tool.ForgeToolValueSource$Parameters_Decorated@75e01fac of type ForgeToolValueSource.Parameters
+   > Could not resolve all files for configuration ':detachedConfiguration2'.
+      > Could not resolve net.sf.jopt-simple:jopt-simple:5.0.4.
+        Required by:
+            root project 'deathbreakdown-forge' > net.minecraftforge:installertools:1.2.0
+         > Could not resolve net.sf.jopt-simple:jopt-simple:5.0.4.
+            > Could not parse POM https://libraries.minecraft.net/net/sf/jopt-simple/jopt-simple/5.0.4/jopt-simple-5.0.4.pom
+               > Could not resolve org.sonatype.oss:oss-parent:7.
+                  > Could not resolve org.sonatype.oss:oss-parent:7.
+                     > Could not get resource 'https://repo.maven.apache.org/maven2/org/sonatype/oss/oss-parent/7/oss-parent-7.pom'.
+                        > Could not HEAD 'https://repo.maven.apache.org/maven2/org/sonatype/oss/oss-parent/7/oss-parent-7.pom'. Received status code 429 from server: Too Many Requests
+      > Could not resolve com.google.code.gson:gson:2.8.6.
+        Required by:
+            root project 'deathbreakdown-forge' > net.minecraftforge:installertools:1.2.0
