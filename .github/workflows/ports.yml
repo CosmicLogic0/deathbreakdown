@@ -83,7 +83,7 @@ jobs:
         working-directory: ${{ matrix.dir }}
         run: |
           set -o pipefail
-          case "${{ matrix.loader }}" in *26) export JAVA_HOME="$JAVA_HOME_25_X64" ;; *) export JAVA_HOME="$JAVA_HOME_21_X64" ;; esac
+          case "${{ matrix.loader }}" in *26|forge112) export JAVA_HOME="$JAVA_HOME_25_X64" ;; *) export JAVA_HOME="$JAVA_HOME_21_X64" ;; esac
           chmod +x gradlew
           ./gradlew build -x test --no-daemon -Pminecraft_version=${{ matrix.mc }} ${{ steps.v.outputs.args }} 2>&1 | tee build.log
       - name: Pick the jar
