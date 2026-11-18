@@ -1,0 +1,12 @@
+// CI-only helper mod that takes the gallery screenshots in the real 1.21.1 client. Never released.
+plugins {
+    id 'java'
+    id 'net.neoforged.moddev'
+}
+group = 'com.cosmiclogic.dbshots'
+version = '0.0.1'
+base { archivesName = 'dbshots' }
+java { toolchain.languageVersion = JavaLanguageVersion.of(21) }
+neoForge {
+    version = project.neoforge_version
+}

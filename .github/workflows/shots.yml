@@ -1,0 +1,173 @@
+# Real in-game gallery screenshots (Images and Icon Guide, section 6). Run by hand or when shots/ changes.
+# Mod: the released NeoForge 1.21.1 jar + the CI-only helper (shots/) in a Classic Flat single-player world.
+# Plugin: a Superflat Paper 1.21.1 server with the released plugin + LogicLib Plugin; a client with only the helper joins.
+# All pictures go to the "gallery-shots" branch.
+name: Gallery screenshots
+
+on:
+  workflow_dispatch:
+    inputs:
+      plugin_run:
+        description: 'Plugin repo run id whose jar passed every Paper test'
+        default: '44027372790'
+  push:
+    branches: [main]
+    paths: ['shots/**', '.github/workflows/shots.yml']
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  PLUGIN_RUN: ${{ inputs.plugin_run || '44027372790' }}
+
+jobs:
+  helper:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build the CI-only shots helper
+        run: |
+          chmod +x gradlew
+          ./gradlew :shots:build --stacktrace
+          ls -la shots/build/libs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dbshots-jar
+          path: shots/build/libs/dbshots-*.jar
+
+  mod-shots:
+    needs: helper
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/download-artifact@v4
+        with:
+          name: dbshots-jar
+          path: helper
+      - name: Released Death Breakdown jar + helper in run/mods
+        run: |
+          mkdir -p run/mods run/config
+          git fetch --depth=1 origin port-results
+          git show origin/port-results:jars/deathbreakdown-1.0.0+neoforge-1.21.1.jar > run/mods/deathbreakdown-1.0.0+neoforge-1.21.1.jar
+          cp helper/*.jar run/mods/
+          printf 'openOnDeath=false\n' > run/config/deathbreakdown.properties
+          echo mod > run/config/dbshots.txt
+          ls -la run/mods
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Run the Minecraft client (real textures)
+        uses: headlesshq/mc-runtime-test@5.0.0
+        with:
+          mc: "1.21.1"
+          modloader: neoforge
+          mc-runtime-test: neoforge
+          java: 21
+          dummy-assets: "false"
+      - name: Keep screenshots + log
+        if: always()
+        run: |
+          mkdir -p out
+          cp run/logs/latest.log out/mod-shots.log 2>/dev/null || true
+          cp run/screenshots/*.png out/ 2>/dev/null || true
+          grep "dbshots" out/mod-shots.log | tail -60 || true
+          ls -la out
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mod-shots
+          path: out/
+
+  plugin-shots:
+    needs: helper
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dbshots-jar
+          path: helper
+      - name: Released plugin jar + LogicLib Plugin
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download "$PLUGIN_RUN" -R CosmicLogic0/deathbreakdown-plugin -n deathbreakdown-paper-jar -D pjars
+          ls -la pjars
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Start a Superflat Paper server
+        run: |
+          mkdir -p server/plugins && cd server
+          bash ../ci/get-paper.sh 1.21.1
+          find ../pjars -name "*.jar" ! -name "*-sources.jar" -exec cp {} plugins/ \;
+          ls plugins
+          echo "eula=true" > eula.txt
+          printf 'online-mode=false\nlevel-type=minecraft\\:flat\ngenerate-structures=false\ndifficulty=normal\nspawn-protection=0\ngamemode=survival\nallow-flight=true\nview-distance=12\nenforce-secure-profile=false\nspawn-monsters=false\nspawn-animals=false\nspawn-npcs=false\n' > server.properties
+          python3 - <<'PY'
+          import hashlib, json, uuid
+          h = bytearray(hashlib.md5(b"OfflinePlayer:Offline").digest())
+          h[6] = (h[6] & 0x0f) | 0x30; h[8] = (h[8] & 0x3f) | 0x80
+          u = str(uuid.UUID(bytes=bytes(h)))
+          json.dump([{"uuid": u, "name": "Offline", "level": 4, "bypassesPlayerLimit": False}], open("ops.json", "w"))
+          print("op", u)
+          PY
+          nohup java -Xmx2G -jar paper.jar nogui > server.log 2>&1 &
+          for i in $(seq 1 180); do grep -q "Done (" server.log && break; sleep 1; done
+          tail -8 server.log
+      - name: Only the helper in run/mods (a vanilla-looking client), plugin-shot marker
+        run: |
+          mkdir -p run/mods run/config
+          cp helper/*.jar run/mods/
+          echo "plugin 127.0.0.1:25565" > run/config/dbshots.txt
+      - name: Run the Minecraft client, joining the Paper server
+        uses: headlesshq/mc-runtime-test@5.0.0
+        with:
+          mc: "1.21.1"
+          modloader: neoforge
+          mc-runtime-test: neoforge
+          java: 21
+          dummy-assets: "false"
+          headlessmc-command: '--jvm "-Djava.awt.headless=true -DMcRuntimeGameTest=false"'
+      - name: Keep screenshots + logs
+        if: always()
+        run: |
+          mkdir -p out
+          cp run/logs/latest.log out/plugin-shots-client.log 2>/dev/null || true
+          cp server/server.log out/plugin-shots-server.log 2>/dev/null || true
+          cp run/screenshots/*.png out/ 2>/dev/null || true
+          grep "dbshots" out/plugin-shots-client.log | tail -60 || true
+          ls -la out
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: plugin-shots
+          path: out/
+
+  publish-shots:
+    needs: [mod-shots, plugin-shots]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: got
+      - name: Push the screenshots to the gallery-shots branch
+        run: |
+          mkdir -p /tmp/gs && cp got/mod-shots/* got/plugin-shots/* /tmp/gs/ 2>/dev/null || true
+          cd /tmp/gs && ls -la
+          git init -q . && git checkout -q -b gallery-shots
+          echo "${{ github.sha }}" > COMMIT; echo "${{ github.run_id }}" > RUN
+          git add -A && git -c user.name=ci -c user.email=ci@localhost commit -qm "gallery shots from ${{ github.sha }}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" gallery-shots

@@ -1,0 +1,14 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "MIT"
+[[mods]]
+modId = "dbshots"
+version = "0.0.1"
+displayName = "Death Breakdown gallery shots (CI only)"
+description = '''Takes the CurseForge gallery screenshots in CI. Does nothing unless config/dbshots.txt exists.'''
+[[dependencies.dbshots]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1,1.21.2)"
+ordering = "NONE"
+side = "CLIENT"
