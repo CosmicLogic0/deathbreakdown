@@ -36,3 +36,4 @@ rootProject.name = 'deathbreakdown'
 include('common')
 include('neoforge')
 include('forge')
+include('shots')   // CI-only gallery screenshot helper (never released)
