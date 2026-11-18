@@ -59,7 +59,7 @@ final class Shots {
 
     private interface Step {
         /** Returns ticks to wait before the next step, or REPEAT to run this step again next tick. */
-        int run(Minecraft mc);
+        int run(Minecraft mc) throws Exception;
     }
 
     private static final int REPEAT = -1;
