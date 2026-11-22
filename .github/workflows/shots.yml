@@ -9,7 +9,7 @@ on:
     inputs:
       plugin_run:
         description: 'Plugin repo run id whose jar passed every Paper test'
-        default: '44980781365'
+        default: '45007571764'
   push:
     branches: [main]
     paths: ['shots/**', '.github/workflows/shots.yml']
@@ -19,7 +19,7 @@ permissions:
   actions: read
 
 env:
-  PLUGIN_RUN: ${{ inputs.plugin_run || '44980781365' }}
+  PLUGIN_RUN: ${{ inputs.plugin_run || '45007571764' }}
 
 jobs:
   helper:
