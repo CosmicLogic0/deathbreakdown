@@ -16,8 +16,13 @@ public final class ClientSelfTest112 {
     private ClientSelfTest112() {}
 
     static volatile boolean sawDeathPacket, sawSummary, sawDeathButton, sawRecapScreen, sawReopen;
-    private static boolean started, done, reopened, hurt;
+    private static boolean started, done, reopened, hurt, holding;
     private static long startAt, hurtAt;
+
+    /** Invisible, doesn't pause: keeps the client test from ending before this test is done. */
+    private static final class Hold extends net.minecraft.client.gui.GuiScreen {
+        @Override public boolean doesGuiPauseGame() { return false; }
+    }
 
     static void maybeStart() {
         if (started) return;
@@ -47,8 +52,13 @@ public final class ClientSelfTest112 {
         if (now - startAt > 240_000L) { finish("FAIL: timed out"); return; }
         final IntegratedServer server = mc.getIntegratedServer();
         if (mc.player == null || server == null) return;
+        if (!holding) {
+            holding = true;
+            mc.displayGuiScreen(new Hold());
+            hurtAt = now + 1500;
+            return;
+        }
         if (!hurt) {
-            if (hurtAt == 0) { hurtAt = now + 4000; return; }
             if (now < hurtAt) return;
             hurt = true;
             DeathBreakdown112.LOG.info("Death Breakdown client selftest: hurting the player");
@@ -86,6 +96,6 @@ public final class ClientSelfTest112 {
         if (result.startsWith("PASS")) DeathBreakdown112.LOG.info("Death Breakdown client selftest {}", result);
         else DeathBreakdown112.LOG.error("Death Breakdown client selftest {}", result);
         Minecraft mc = Minecraft.getMinecraft();
-        if (mc.currentScreen instanceof RecapScreen112) mc.displayGuiScreen(null);
+        if (mc.currentScreen instanceof RecapScreen112 || mc.currentScreen instanceof Hold) mc.displayGuiScreen(null);
     }
 }

@@ -20,8 +20,14 @@ public final class ClientSelfTest {
     private ClientSelfTest() {}
 
     static volatile boolean sawDeathPacket, sawSummary, sawDeathButton, sawRecapScreen, sawReopen;
-    private static boolean started, enabled, done, reopened, hurt;
-    private static long startAt, hurtAt;
+    private static boolean started, enabled, done, reopened, hurt, finalHit, holding;
+    private static long startAt, hurtAt, finalAt;
+
+    /** Invisible, doesn't pause: keeps the client test from ending before this test is done. */
+    private static final class Hold extends net.minecraft.client.gui.screens.Screen {
+        Hold() { super(com.cosmiclogic.deathbreakdown.Txt.lit("")); }
+        @Override public boolean isPauseScreen() { return false; }
+    }
 
     static void maybeStart() {
         if (started) return;
@@ -57,8 +63,13 @@ public final class ClientSelfTest {
         if (now - startAt > 240_000L) { finish("FAIL: timed out"); return; }
         IntegratedServer server = mc.getSingleplayerServer();
         if (mc.player == null || server == null) return;
+        if (!holding) {
+            holding = true;
+            ClientRecap.setScreen(mc, new Hold());
+            hurtAt = now + 1500; // let the world settle
+            return;
+        }
         if (!hurt) {
-            if (hurtAt == 0) { hurtAt = now + 4000; return; } // let the world settle
             if (now < hurtAt) return;
             hurt = true;
             DeathBreakdown.LOG.info("Death Breakdown client selftest: hurting the player");
@@ -66,11 +77,15 @@ public final class ClientSelfTest {
                 ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
                 sp.setGameMode(GameType.SURVIVAL);
                 sp.setHealth(20);
-                for (int i = 0; i < 6 && sp.isAlive(); i++) {
-                    sp.invulnerableTime = 0;
-                    hit(sp, i);
-                }
+                hit(sp, 0, 8); // lava
             });
+            finalAt = now + 1200; // after the hurt cooldown (10 ticks)
+            return;
+        }
+        if (!finalHit) {
+            if (now < finalAt) return;
+            finalHit = true;
+            server.execute(() -> hit(server.getPlayerList().getPlayers().get(0), 1, 40)); // a deadly fall
             return;
         }
         if (sawRecapScreen && !reopened) {
@@ -89,16 +104,16 @@ public final class ClientSelfTest {
         }
     }
 
-    private static void hit(ServerPlayer sp, int i) {
+    private static void hit(ServerPlayer sp, int i, float amount) {
         //#if MC >= 1.19.4
         DamageSource src = i % 2 == 0 ? sp.damageSources().lava() : sp.damageSources().fall();
         //#else
         DamageSource src = i % 2 == 0 ? DamageSource.LAVA : DamageSource.FALL;
         //#endif
         //#if MC >= 1.21.2
-        sp.hurtServer((net.minecraft.server.level.ServerLevel) sp.level(), src, 8);
+        sp.hurtServer((net.minecraft.server.level.ServerLevel) sp.level(), src, amount);
         //#else
-        sp.hurt(src, 8);
+        sp.hurt(src, amount);
         //#endif
     }
 
@@ -108,6 +123,7 @@ public final class ClientSelfTest {
         if (result.startsWith("PASS")) DeathBreakdown.LOG.info("Death Breakdown client selftest {}", result);
         else DeathBreakdown.LOG.error("Death Breakdown client selftest {}", result);
         Minecraft mc = Minecraft.getInstance();
-        if (ClientRecap.screen(mc) instanceof RecapScreen) ClientRecap.setScreen(mc, null);
+        net.minecraft.client.gui.screens.Screen open = ClientRecap.screen(mc);
+        if (open instanceof RecapScreen || open instanceof Hold) ClientRecap.setScreen(mc, null);
     }
 }
