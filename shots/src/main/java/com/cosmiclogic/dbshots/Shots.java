@@ -57,6 +57,8 @@ final class Shots {
     private static final List<Step> STEPS = new ArrayList<>();
     private static BlockPos base;
     private static Style detailsStyle, openStyle;
+    private static double hoverX, hoverY;
+    private static int hoverTicks;
 
     private interface Step {
         /** Returns ticks to wait before the next step, or REPEAT to run this step again next tick. */
@@ -291,7 +293,7 @@ final class Shots {
             // reopen with /deathbreakdown, over the world
             STEPS.add(m -> {
                 hold(m);
-                guiScale(m, 4);
+                guiScale(m, 3);
                 cmd(m, tp(base.offset(4, 0, -6), 20, 4));
                 return 40;
             });
@@ -336,7 +338,13 @@ final class Shots {
         STEPS.add(m -> {
             findChatStyles(m);
             if (detailsStyle == null) return REPEAT;
-            return 2;
+            hoverTicks = 0;
+            return 1;
+        });
+        STEPS.add(m -> { // keep the mouse on [details] for a moment, then shoot
+            mouse(m, hoverX, hoverY);
+            if (m.screen != null) m.screen.mouseMoved(hoverX, hoverY);
+            return ++hoverTicks < 10 ? REPEAT : 1;
         });
         STEPS.add(m -> save(m, p + "chat-hover"));
         STEPS.add(m -> {
@@ -375,7 +383,6 @@ final class Shots {
         STEPS.add(m -> {
             if (m.screen == null || !m.screen.getClass().getSimpleName().contains("RecapScreen")) return REPEAT;
             m.options.hideGui = true;
-            guiScale(m, 4);
             parkMouse(m);
             return 10;
         });
@@ -449,7 +456,9 @@ final class Shots {
             if (detailsStyle != null && openStyle != null) break;
         }
         if (detailsStyle != null) {
-            mouse(mc, dx, dy);
+            hoverX = dx;
+            hoverY = dy - 2;
+            mouse(mc, hoverX, hoverY);
             var win = mc.getWindow();
             double gx = mc.mouseHandler.xpos() * win.getGuiScaledWidth() / win.getScreenWidth();
             double gy = mc.mouseHandler.ypos() * win.getGuiScaledHeight() / win.getScreenHeight();
