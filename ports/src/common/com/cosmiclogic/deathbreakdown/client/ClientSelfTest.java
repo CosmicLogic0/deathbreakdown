@@ -21,7 +21,7 @@ public final class ClientSelfTest {
 
     static volatile boolean sawDeathPacket, sawSummary, sawDeathButton, sawRecapScreen, sawReopen;
     private static boolean started, enabled, done, reopened, hurt, finalHit, holding;
-    private static long startAt, hurtAt, finalAt;
+    private static long startAt, hurtAt, finalAt, lastLog;
 
     /** Invisible, doesn't pause: keeps the client test from ending before this test is done. */
     private static final class Hold extends net.minecraft.client.gui.screens.Screen {
@@ -62,8 +62,15 @@ public final class ClientSelfTest {
         long now = System.currentTimeMillis();
         if (now - startAt > 240_000L) { finish("FAIL: timed out"); return; }
         IntegratedServer server = mc.getSingleplayerServer();
+        if (now - lastLog > 2000) {
+            lastLog = now;
+            DeathBreakdown.LOG.info("Death Breakdown client selftest state: player={} server={} screen={} holding={} hurt={} final={} packet={} summary={} button={} recap={}",
+                    mc.player != null, server != null, ClientRecap.screen(mc) == null ? "none" : ClientRecap.screen(mc).getClass().getSimpleName(),
+                    holding, hurt, finalHit, sawDeathPacket, sawSummary, sawDeathButton, sawRecapScreen);
+        }
         if (mc.player == null || server == null) return;
         if (!holding) {
+            if (ClientRecap.screen(mc) != null) return; // wait until the world is really shown (no loading screen)
             holding = true;
             ClientRecap.setScreen(mc, new Hold());
             hurtAt = now + 1500; // let the world settle
