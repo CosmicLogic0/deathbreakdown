@@ -5,6 +5,7 @@ import com.cosmiclogic.deathbreakdown.core.DamageMath;
 import com.cosmiclogic.deathbreakdown.core.Hit;
 import com.cosmiclogic.deathbreakdown.core.Recap;
 import com.cosmiclogic.deathbreakdown.core.RecapCodec;
+import com.cosmiclogic.deathbreakdown.core.RecapStore;
 import com.cosmiclogic.deathbreakdown.core.RecapText;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
@@ -29,6 +30,7 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 
+import java.io.File;
 import java.util.List;
 
 /** Server side for 1.12.2: records hits, builds the recap on death and sends it (screen or chat). */
@@ -64,29 +66,75 @@ public class ServerEvents112 {
         Hit fallback = new Hit(now, sourceName(src), weapon(src), kind(src), typeId(src), 0, 0, 0, 0, 0, 0, 0, 0, false);
         String msg = p.getCombatTracker().getDeathMessage().getUnformattedText();
         Recap r = DeathBreakdown112.HITS.onDeath(p.getUniqueID(), p.getName(), msg, now, fallback);
-        send(p, r);
+        send(p, r, true);
+        saveHistory(p);
     }
 
     @SubscribeEvent
     public void onLogout(PlayerEvent.PlayerLoggedOutEvent e) {
-        if (e.player != null) DeathBreakdown112.HITS.forget(e.player.getUniqueID());
+        if (e.player != null) DeathBreakdown112.HITS.forget(e.player.getUniqueID()); // live hits only; history stays
     }
 
-    static void send(EntityPlayerMP p, Recap r) {
-        if (DeathBreakdown112.hasMod(p)) DeathBreakdown112.sendRecap(p, RecapCodec.encode(r));
-        else if (DeathBreakdown112.config.chatSummary) p.sendMessage(chatSummary(r, DeathBreakdown112.config.hearts));
+    @SubscribeEvent
+    public void onLogin(PlayerEvent.PlayerLoggedInEvent e) {
+        if (!(e.player instanceof EntityPlayerMP) || !DeathBreakdown112.config.saveHistory) return;
+        File dir = storeDir((EntityPlayerMP) e.player);
+        if (dir != null) DeathBreakdown112.HITS.restore(e.player.getUniqueID(), RecapStore.load(dir, e.player.getUniqueID()));
+    }
+
+    /** Keeps the player's recent recaps in the world folder (deathbreakdown/<uuid>.txt). */
+    static void saveHistory(EntityPlayerMP p) {
+        if (!DeathBreakdown112.config.saveHistory) return;
+        File dir = storeDir(p);
+        if (dir != null && !RecapStore.save(dir, p.getUniqueID(), DeathBreakdown112.HITS.history(p.getUniqueID()))) {
+            DeathBreakdown112.LOG.warn("Couldn't save death history to {}", dir);
+        }
+    }
+
+    static File storeDir(EntityPlayerMP p) {
+        try {
+            return new File(p.getServerWorld().getSaveHandler().getWorldDirectory(), DeathBreakdown112.MOD_ID);
+        } catch (RuntimeException e) {
+            DeathBreakdown112.LOG.warn("No world folder for death history: {}", e.toString());
+            return null;
+        }
+    }
+
+    /** A death that just happened. */
+    static void send(EntityPlayerMP p, Recap r) { send(p, r, true); }
+
+    /** death = it just happened; false = asked for again (/deathbreakdown, history). */
+    static void send(EntityPlayerMP p, Recap r, boolean death) {
+        if (DeathBreakdown112.hasMod(p)) DeathBreakdown112.sendRecap(p, death ? RecapCodec.encodeDeath(r) : RecapCodec.encodeReplay(r));
+        else if (!death || DeathBreakdown112.config.chatSummary) p.sendMessage(chatSummary(r, DeathBreakdown112.config.hearts));
     }
 
     // ---- chat (vanilla clients). 1.12 chat has 16 colors, no RGB. ----
 
-    static ITextComponent chatSummary(Recap r, boolean hearts) {
+    /** How many hits the chat hover shows; older ones are summed up so it fits on screen. */
+    static final int HOVER_HITS = 6;
+
+    static TextComponentString hover(Recap r, boolean hearts) {
         TextComponentString hover = color(DeathBreakdown112.NAME, TextFormatting.GOLD);
         hover.appendSibling(color("\n" + r.deathMessage, TextFormatting.GRAY));
-        for (Hit h : r.hits) {
-            List<String> lines = RecapText.details(h, r, hearts);
-            hover.appendSibling(color("\n\n" + lines.get(0), h.finalBlow ? TextFormatting.GOLD : TextFormatting.WHITE));
-            for (int i = 1; i < lines.size(); i++) hover.appendSibling(color("\n " + lines.get(i), TextFormatting.GRAY));
+        String tip = DeathBreakdown112.config.showTip ? RecapText.tip(r) : "";
+        if (!tip.isEmpty()) hover.appendSibling(color("\n" + tip, TextFormatting.YELLOW));
+        boolean header = true;
+        for (String line : RecapText.hoverLines(r, hearts, HOVER_HITS)) {
+            if (line.isEmpty()) { header = true; continue; }
+            if (line.startsWith("(")) { hover.appendSibling(color("\n\n" + line, TextFormatting.DARK_GRAY)); header = true; continue; }
+            if (header) {
+                hover.appendSibling(color("\n\n" + line, line.startsWith("FINAL BLOW") ? TextFormatting.GOLD : TextFormatting.WHITE));
+                header = false;
+            } else {
+                hover.appendSibling(color("\n " + line, TextFormatting.GRAY));
+            }
         }
+        return hover;
+    }
+
+    static ITextComponent chatSummary(Recap r, boolean hearts) {
+        TextComponentString hover = hover(r, hearts);
         TextComponentString details = new TextComponentString(" [details]");
         details.setStyle(new Style().setColor(TextFormatting.AQUA)
                 .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover))

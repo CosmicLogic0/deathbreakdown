@@ -26,8 +26,9 @@ import java.io.File;
  * Death Breakdown for Forge 1.12.2. Players without the mod can join (acceptableRemoteVersions = "*"):
  * they get the chat recap; players with it get the recap screen.
  */
-@Mod(modid = DeathBreakdown112.MOD_ID, name = DeathBreakdown112.NAME, version = "1.0.0",
-        acceptableRemoteVersions = "*", acceptedMinecraftVersions = "[1.12.2]")
+@Mod(modid = DeathBreakdown112.MOD_ID, name = DeathBreakdown112.NAME, version = "1.1.0",
+        acceptableRemoteVersions = "*", acceptedMinecraftVersions = "[1.12.2]",
+        guiFactory = "com.cosmiclogic.deathbreakdown.legacy.GuiFactory112")
 public class DeathBreakdown112 {
     public static final String MOD_ID = "deathbreakdown";
     public static final String NAME = "Death Breakdown";
@@ -61,7 +62,13 @@ public class DeathBreakdown112 {
     static void reloadConfig() {
         config = RecapConfig.load(configFile);
         HITS.setWindowMs(config.windowMs());
+        HITS.setHistorySize(config.historySize);
+        for (String problem : config.problems) LOG.warn("deathbreakdown.properties: {}", problem);
     }
+
+    static File configFile() { return configFile; }
+
+    static File configDir() { return configFile.getParentFile(); }
 
     /** True when this player's client has Death Breakdown (so it can show the recap screen). */
     static boolean hasMod(EntityPlayerMP p) {
