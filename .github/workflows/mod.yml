@@ -1,5 +1,6 @@
-# Builds the Forge + NeoForge mod and runs the automatic tests copied from LogicLib:
-# core unit tests, a real dedicated server boot, and a real headless client that joins a world.
+# Fast checks on every push: the plain-Java core's unit tests, and the CI-only gallery screenshot helper still builds.
+# The mod itself (every Minecraft version and loader: build, real server + selftest, real client) is tested by
+# ports.yml; the Paper plugin by the deathbreakdown-plugin repo.
 name: Mod build and test
 
 on:
@@ -7,11 +8,6 @@ on:
     paths-ignore: ['art/**', 'docs/**', '**.md']
   pull_request:
   workflow_dispatch:
-
-env:
-  MC: "1.21.1"
-  FORGE: "1.21.1-52.0.28"
-  NEOFORGE: "21.1.80"
 
 jobs:
   core-test:
@@ -25,7 +21,7 @@ jobs:
       - name: Core unit tests
         run: bash ci/core-test.sh
 
-  build:
+  shots-helper:
     needs: core-test
     runs-on: ubuntu-latest
     steps:
@@ -35,84 +31,7 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
-      - name: Build Forge + NeoForge jars
+      - name: Build the CI-only screenshot helper
         run: |
           chmod +x gradlew
-          ./gradlew build --continue --stacktrace
-      - name: Upload jars
-        uses: actions/upload-artifact@v4
-        with:
-          name: deathbreakdown-jars
-          path: |
-            forge/build/libs/*.jar
-            neoforge/build/libs/*.jar
-
-  # Starts a real dedicated server with the mod and checks the log.
-  server-test:
-    needs: build
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        loader: [forge, neoforge]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 21
-      - uses: actions/download-artifact@v4
-        with:
-          name: deathbreakdown-jars
-          path: jars
-      - name: Install ${{ matrix.loader }} server
-        run: |
-          mkdir -p server/mods && cd server
-          if [ "${{ matrix.loader }}" = "forge" ]; then
-            curl -fsSL -o installer.jar "https://maven.minecraftforge.net/net/minecraftforge/forge/${FORGE}/forge-${FORGE}-installer.jar"
-            java -jar installer.jar --installServer . > install.log 2>&1 || (tail -50 install.log; exit 1)
-          else
-            curl -fsSL -o installer.jar "https://maven.neoforged.net/releases/net/neoforged/neoforge/${NEOFORGE}/neoforge-${NEOFORGE}-installer.jar"
-            java -jar installer.jar --install-server . > install.log 2>&1 || (tail -50 install.log; exit 1)
-          fi
-          find ../jars -name "deathbreakdown-${{ matrix.loader }}-${MC}-*.jar" ! -name "*-sources.jar" ! -name "*-javadoc.jar" -exec cp {} mods/ \;
-          ls mods
-      - name: Start server, run selftest, check Death Breakdown
-        env:
-          CONSOLE_CMDS: "deathbreakdown selftest"
-          EXPECT_AFTER: "Death Breakdown selftest PASS"
-        run: |
-          chmod +x ci/server-test.sh server/run.sh
-          LOADER_NAME=$([ "${{ matrix.loader }}" = "forge" ] && echo Forge || echo NeoForge)
-          ci/server-test.sh server "Death Breakdown loaded on ${LOADER_NAME}" -- bash run.sh nogui
-          test -f server/config/deathbreakdown.properties && echo "PASS: config file written"
-
-  # Starts the real Minecraft CLIENT (headless), joins a singleplayer world and quits.
-  client-test:
-    needs: build
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        loader: [forge, neoforge]
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: deathbreakdown-jars
-          path: jars
-      - name: Put Death Breakdown in run/mods
-        run: |
-          mkdir -p run/mods
-          find jars -name "deathbreakdown-${{ matrix.loader }}-${MC}-*.jar" ! -name "*-sources.jar" ! -name "*-javadoc.jar" -exec cp {} run/mods/ \;
-          ls run/mods
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 21
-      - name: Run the Minecraft client
-        uses: headlesshq/mc-runtime-test@5.0.0
-        with:
-          mc: "1.21.1"
-          modloader: ${{ matrix.loader }}
-          mc-runtime-test: ${{ matrix.loader }}
-          java: 21
+          ./gradlew :shots:build --stacktrace

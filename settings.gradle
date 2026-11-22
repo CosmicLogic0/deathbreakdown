@@ -31,9 +31,7 @@ plugins {
     id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
 }
 
-// Death Breakdown: Forge + NeoForge. Plain-Java core is in core/ and compiled into every jar.
+// Root build: only the CI-only gallery screenshot helper. The mod itself (every version and loader) is built from
+// ports/ by .github/workflows/ports.yml; the plain-Java core is in core/ and compiled into every jar.
 rootProject.name = 'deathbreakdown'
-include('common')
-include('neoforge')
-include('forge')
 include('shots')   // CI-only gallery screenshot helper (never released)
