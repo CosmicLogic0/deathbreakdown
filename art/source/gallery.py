@@ -177,3 +177,130 @@ def make_static():
 
 if __name__ == '__main__':
     make_static()
+
+
+def caption(d, xy, num, text, w=520):
+    x, y = xy
+    stext(d, (x, y), num, F(34), SUB, 'ma', sh=3)
+    lines, cur = [], ''
+    for word in text.split():
+        t = (cur + ' ' + word).strip()
+        if d.textlength(t, font=T(30)) > w and cur:
+            lines.append(cur); cur = word
+        else:
+            cur = t
+    lines.append(cur)
+    for i, l in enumerate(lines):
+        d.text((x, y + 56 + i * 40), l, font=T(30), fill=TITLE, anchor='ma')
+
+
+def three_steps(title, sub, crops, captions, out, seed):
+    """Three real screenshot crops left to right with numbered captions and arrows between them."""
+    im, d = base(seed, [(60, 40, 1860, 1040)])
+    heading(d, title, sub)
+    boxes = [(60, 200, 620, 760), (680, 200, 1240, 760), (1300, 200, 1860, 760)]
+    centers = []
+    for (pic, box), cap, n in zip(zip(crops, boxes), captions, ['1', '2', '3']):
+        px, py, s = panel(im, d, pic, box)
+        centers.append(((box[0] + box[2]) // 2, (box[1] + box[3]) // 2))
+        caption(d, ((box[0] + box[2]) // 2, 800), n, cap)
+    for a, b in zip(boxes, boxes[1:]):
+        arrow(d, (a[2] - 2, 480), (b[0] + 2, 480), w=9, head=26)
+    footer(d)
+    im.save(os.path.join(OUT, out))
+    print('made', out)
+
+
+def mod_explainers():
+    death = shot('mod-death-screen.png').crop((0, 0, 1040, 640))
+    recap = shot('mod-recap-lava.png')
+    keys = shot('mod-key-binds.png').crop((150, 1250 - 600, 1750, 1080 - 0)) if False else shot('mod-key-binds.png').crop((160, 660, 1760, 1060))
+    three_steps('How it works', 'From death to the full story in one click',
+                [death, recap, keys],
+                ['You die. Click the skull "Death Breakdown" button (or let it open by itself).',
+                 'Read every hit from your last 10 seconds, oldest at the top.',
+                 'Press K, or type /deathbreakdown, to open it again any time.'],
+                'mod-02-how-it-works.png', 51)
+
+    # Read the recap: the lava recap with every column labeled
+    im, d = base(52, [(60, 40, 1860, 1040)])
+    heading(d, 'Read the recap', 'One row per hit. Hover a row for every number.')
+    pic = shot('mod-recap-lava.png')
+    px, py, s = panel(im, d, pic, (300, 250, 1620, 900))
+    X = lambda x: px + x * s
+    Y = lambda y: py + y * s
+    hy = Y(270)
+    top = [('Seconds before death', 150, 140), ('Damage type', 540, 520), ('Armor blocked', 960, 905), ('Health left', 1665, 1640)]
+    for text, cx, tx in top:
+        l, t, r, b = tag(d, (X(tx) if tx > 300 else 250, 205), text, SUB, T(28))
+        arrow(d, ((l + r) // 2, b + 4), (X(cx), hy - 4), w=5, head=18)
+    bot = [('Who or what hit you', 330, 330, (420, 975)), ('Damage', 720, 700, (790, 975)),
+           ('Enchants blocked', 1170, 1170, (1180, 975)), ('Final blow (skull)', 360, 360, (1640, 975))]
+    for text, cx, _, (tx, ty) in bot:
+        col = DMG if 'Final' in text else SUB
+        l, t, r, b = tag(d, (tx, ty), text, col, T(28))
+        arrow(d, ((l + r) // 2, t - 4), (X(cx), Y(842)), col=col, w=5, head=18)
+    footer(d)
+    im.save(os.path.join(OUT, 'mod-03-read-the-recap.png'))
+    print('made mod-03-read-the-recap.png')
+
+    # What your gear blocked: three real recaps, three kinds of protection
+    im, d = base(53, [(60, 40, 1860, 1040)])
+    heading(d, 'See what your gear blocked', 'Armor and each Protection enchantment, in hearts')
+    items = [('mod-recap-creeper.png', 'Creeper', 'Blast Protection IV', 'enchants stopped 3.71♥', ENCH),
+             ('mod-recap-lava.png', 'Lava', 'Fire Protection IV', 'enchants stopped 4.3♥', ENCH),
+             ('mod-recap-hover.png', 'Skeleton arrows', 'Iron armor', 'armor stopped 2.66♥', ARMOR)]
+    for i, (f, what, gear, num, col) in enumerate(items):
+        x0 = 70 + i * 620
+        panel(im, d, shot(f), (x0, 230, x0 + 540, 560))
+        d.text((x0 + 270, 640), what, font=T(34), fill=TITLE, anchor='mm')
+        tag(d, (x0 + 270, 720), gear, col, T(32))
+        d.text((x0 + 270, 800), num, font=T(32), fill=col, anchor='mm')
+    d.text((W // 2, 905), 'The numbers come from the game\'s own armor and enchantment math, hit by hit.', font=T(30), fill=LINE, anchor='mm')
+    footer(d)
+    im.save(os.path.join(OUT, 'mod-04-gear-blocked.png'))
+    print('made mod-04-gear-blocked.png')
+
+
+def plugin_explainers():
+    im, d = base(61, [(60, 40, 1860, 1040)])
+    heading(d, 'How it works on your server', 'Players see it in chat, no mod needed')
+    chat = shot('plugin-death-chat.png').crop((0, 875, 990, 1010))
+    px, py, sc = panel(im, d, chat, (170, 190, 1750, 380))
+    stext(d, (110, (py + py + chat.height * sc) / 2), '1', F(40), SUB, 'mm', sh=3)
+    d.text((W // 2, py + chat.height * sc + 46), 'After each death: a one-line summary in chat', font=T(32), fill=TITLE, anchor='mm')
+    hover = shot('plugin-chat-hover.png').crop((380, 40, 1240, 1080))
+    book = shot('plugin-book-mobs.png').crop((560, 0, 1360, 760))
+    a1 = panel(im, d, hover, (250, 500, 860, 945))
+    a2 = panel(im, d, book, (1060, 500, 1670, 945))
+    stext(d, (180, 720), '2', F(40), SUB, 'mm', sh=3)
+    stext(d, (1740, 720), '3', F(40), SUB, 'mm', sh=3)
+    d.text((555, 985), 'Hover [details] to see every hit', font=T(30), fill=TITLE, anchor='mm')
+    d.text((1365, 985), 'Click [Open recap] for the book', font=T(30), fill=TITLE, anchor='mm')
+    footer(d, 'Death Breakdown Plugin · by CosmicLogic')
+    im.save(os.path.join(OUT, 'plugin-02-how-it-works.png'))
+    print('made plugin-02-how-it-works.png')
+
+    im, d = base(62, [(60, 40, 1860, 1040)])
+    heading(d, 'The recap book', 'A clean summary first, then one page per hit')
+    p1 = shot('plugin-book-mobs.png').crop((600, 0, 1320, 760))
+    p2 = shot('plugin-book-mobs-page2.png').crop((600, 0, 1320, 760))
+    a = panel(im, d, p1, (420, 200, 960, 960))
+    b = panel(im, d, p2, (1000, 200, 1540, 960))
+    px, py, s = a
+    for text, y, ty, col in [('What killed you', 330, 420, SUB), ('Total damage', 482, 600, DMG), ('Armor + enchants', 520, 760, ARMOR)]:
+        l, t, r, bb = tag(d, (230, ty), text, col, T(28), anchor='mm')
+        arrow(d, (r + 4, ty), (px + 90 * s, py + y * s), col=col, w=5, head=16)
+    px, py, s = b
+    for text, y, ty, col in [('One page per hit', 141, 380, SUB), ('Every number', 480, 620, ARMOR)]:
+        l, t, r, bb = tag(d, (1720, ty), text, col, T(28), anchor='mm')
+        arrow(d, (l - 4, ty), (px + 600 * s, py + y * s), col=col, w=5, head=16)
+    d.text((1720, 690), 'for that hit', font=T(28), fill=ARMOR, anchor='mm')
+    footer(d, 'Death Breakdown Plugin · by CosmicLogic')
+    im.save(os.path.join(OUT, 'plugin-03-recap-book.png'))
+    print('made plugin-03-recap-book.png')
+
+
+if __name__ == '__main__':
+    mod_explainers()
+    plugin_explainers()
