@@ -451,6 +451,7 @@ final class Shots {
         STEPS.add(m -> {
             if (m.screen == null || !m.screen.getClass().getSimpleName().contains("RecapScreen")) return REPEAT;
             m.options.hideGui = true;
+            guiScale(m, 4); // the recap fills the frame
             parkMouse(m);
             return 10;
         });
