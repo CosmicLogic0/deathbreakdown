@@ -7,7 +7,10 @@ TOKEN = os.environ.get('CURSEFORGE_TOKEN', '')
 DRY = os.environ.get('DRY_RUN', 'true') != 'false'
 MOD_ID, PLUGIN_ID = 1808919, 1808923
 VERSION = '1.1.0'
-CHANGELOG = open('CHANGELOG.md', encoding='utf-8').read()
+_full = open('CHANGELOG.md', encoding='utf-8').read()
+# Only this version's section (from '## <VERSION>' to the next '## ').
+_start = _full.find('## ' + VERSION)
+CHANGELOG = _full[_start:_full.find('\n## ', _start + 3)].strip() + '\n' if _start >= 0 else _full
 PLUGIN_CHANGELOG = """## 1.1.0
 ### New
 - **Death history:** each player's last 5 deaths are kept, even after leaving or a restart. `/db history` lists them; click one to open it.
@@ -18,11 +21,13 @@ PLUGIN_CHANGELOG = """## 1.1.0
 ### Improved
 - The [details] hover shows the newest 6 hits, so it always fits on the screen.
 - `/db reload` and the console say exactly what was wrong in config.yml.
+- A config.yml with a typo that breaks the file is kept as `config.yml.broken-<date>` instead of being replaced with the defaults (LogicLib Plugin 0.2.0).
+- **Now requires LogicLib Plugin 0.2.0 or newer.** With an older one the plugin doesn't start and the console says what to get.
 
 ### Fixed
 - A value that isn't a number (like `window-seconds: banana`) made the time window 1 second. It now falls back to the default.
 
-**Requires LogicLib Plugin.**
+**Requires LogicLib Plugin 0.2.0 or newer.**
 """
 
 # (file, loaders, minecraft versions, java)

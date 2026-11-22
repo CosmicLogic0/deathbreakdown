@@ -51,11 +51,34 @@ jobs:
     name: ${{ matrix.id }}
     steps:
       - uses: actions/checkout@v4
+      # Java 8 from Zulu (LogicLib found Temurin's 8u514 archive broken); JDK downloads that arrive cut short get one retry.
       - uses: actions/setup-java@v4
+        id: j8
+        continue-on-error: true
+        with:
+          distribution: zulu
+          java-version: |
+            8
+      - uses: actions/setup-java@v4
+        if: steps.j8.outcome == 'failure'
+        with:
+          distribution: zulu
+          java-version: |
+            8
+      - uses: actions/setup-java@v4
+        id: jnew
+        continue-on-error: true
         with:
           distribution: temurin
           java-version: |
-            8
+            17
+            21
+            25
+      - uses: actions/setup-java@v4
+        if: steps.jnew.outcome == 'failure'
+        with:
+          distribution: temurin
+          java-version: |
             17
             21
             25

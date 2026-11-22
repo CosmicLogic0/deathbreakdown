@@ -19,7 +19,9 @@
 - The recap was lost when you left and rejoined, or reloaded a single-player world.
 - The legend under the recap ran off both edges of the screen at GUI scale 4.
 - The chat hover ran off the screen when you took 7 or more hits.
-- NeoForge 26.x logged a warning about the mod's resource pack info.
+- `/deathbreakdown help`, `history` and the other commands showed nothing on servers with the `sendCommandFeedback` game rule turned off.
+- Minecraft 1.21.11 and 26.x logged errors about the mod's resource pack info (NeoForge 26.x too).
+- In the settings screen, the "Columns in the recap" label touched the buttons.
 
 ## 1.0.0
 First release.
