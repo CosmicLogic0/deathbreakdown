@@ -159,6 +159,7 @@ final class Shots {
         mc.options.graphicsMode().set(GraphicsStatus.FANCY);
         mc.options.renderDistance().set(12);
         mc.options.hideGui = true;
+        Hold.death = true;
         mc.options.tutorialStep = TutorialSteps.NONE;
         mc.getTutorial().setStep(TutorialSteps.NONE);
         base = mc.player.blockPosition();
@@ -325,6 +326,7 @@ final class Shots {
         }
 
         STEPS.add(m -> {
+            Hold.death = false;
             m.options.hideGui = false;
             m.setScreen(null);
             LOG.info("dbshots: done");
@@ -397,10 +399,12 @@ final class Shots {
 
     private static void respawn() {
         STEPS.add(m -> {
+            Hold.death = false;
             if (m.player != null) m.player.respawn();
             return 20;
         });
         STEPS.add(m -> {
+            Hold.death = true;
             hold(m);
             m.options.hideGui = true;
             guiScale(m, 3);
