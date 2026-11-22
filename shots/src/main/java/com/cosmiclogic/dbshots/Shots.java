@@ -276,31 +276,22 @@ final class Shots {
         untilDead();
         if (plugin()) {
             respawn();
-            // /deathbreakdown again: the summary line comes back in chat (close-up)
+            // /deathbreakdown opens the recap book again
             STEPS.add(m -> {
                 cmd(m, "deathbreakdown");
                 m.options.hideGui = false;
                 guiScale(m, 4);
-                m.setScreen(new ChatScreen(""));
                 return 30;
             });
-            STEPS.add(m -> save(m, p + "chat-command"));
+            STEPS.add(m -> m.screen instanceof BookViewScreen ? save(m, p + "book-creeper") : REPEAT);
         } else {
             openRecapFromDeathScreen();
             STEPS.add(m -> save(m, p + "recap-creeper"));
             respawn();
-            // chat close-up: the summary line after each death
-            STEPS.add(m -> {
-                m.options.hideGui = false;
-                guiScale(m, 4);
-                m.setScreen(new ChatScreen(""));
-                return 20;
-            });
-            STEPS.add(m -> save(m, p + "chat-summary"));
             // reopen with /deathbreakdown, over the world
             STEPS.add(m -> {
                 hold(m);
-                guiScale(m, 3);
+                guiScale(m, 4);
                 cmd(m, tp(base.offset(4, 0, -6), 20, 4));
                 return 40;
             });
@@ -338,7 +329,7 @@ final class Shots {
     private static void chatHoverAndBook(String p, String name, boolean pages) {
         STEPS.add(m -> {
             m.options.hideGui = false;
-            guiScale(m, 3);
+            guiScale(m, 2); // the hover lists every hit; at scale 2 it fits on screen
             m.setScreen(new ChatScreen(""));
             return 10;
         });
@@ -384,6 +375,7 @@ final class Shots {
         STEPS.add(m -> {
             if (m.screen == null || !m.screen.getClass().getSimpleName().contains("RecapScreen")) return REPEAT;
             m.options.hideGui = true;
+            guiScale(m, 4);
             parkMouse(m);
             return 10;
         });
