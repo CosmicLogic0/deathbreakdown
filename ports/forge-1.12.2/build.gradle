@@ -27,7 +27,7 @@ minecraft {
 sourceSets.main.java.srcDir '../../core/src/main/java'
 sourceSets.main.resources.srcDir layout.buildDirectory.dir('assets-res')
 tasks.register('dbAssets', Sync) {
-    from('../../common/src/main/resources') { include 'deathbreakdown.png' }
+    from('../resources') { include 'deathbreakdown.png' }
     into layout.buildDirectory.dir('assets-res')
 }
 processResources {

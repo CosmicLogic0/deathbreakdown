@@ -160,6 +160,13 @@ jobs:
           fi
           if [ "$C" = failure ]; then echo "--- client ---" >> "$R"; ls run 2>/dev/null | head -20 >> "$R"; for L in run/logs/latest.log run/logs/debug.log; do [ -f "$L" ] && { echo "[$L]"; grep -E "ERROR|Exception|Caused by|FATAL|mc-runtime-test|McRuntimeTest" "$L" | head -25; tail -15 "$L"; } >> "$R"; done; fi
           if [ "$S" = failure ] && [ -f server-test.log ]; then echo "--- server ---" >> "$R"; grep -E "::error|selftest|Exception|ERROR|Caused by" server-test.log | head -40 >> "$R"; fi
+          # Keep the full logs of every run (pass or fail) and list warnings/errors that mention the mod.
+          mkdir -p result/logs
+          [ -f server-test.log ] && cp server-test.log "result/logs/${{ matrix.id }}-server.log"
+          [ -f run/logs/latest.log ] && cp run/logs/latest.log "result/logs/${{ matrix.id }}-client.log"
+          MW=$(cat server-test.log run/logs/latest.log 2>/dev/null | grep -iE "deathbreakdown|death breakdown" | grep -E "WARN|ERROR|Exception" | grep -v "selftest PASS" || true)
+          echo "--- mod warnings/errors in the logs: $(printf '%s' "$MW" | grep -c . || true) ---" >> "$R"
+          printf '%s\n' "$MW" | head -20 >> "$R"
           cat "$R" | head -60
           E=$(head -40 "$R" | sed 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g')
           if grep -q '^PASS' "$R"; then echo "::notice title=${{ matrix.id }}::$E"; else echo "::error title=${{ matrix.id }}::$E"; fi

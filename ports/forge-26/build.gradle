@@ -38,7 +38,7 @@ def res = layout.buildDirectory.dir('gen-res')
 def mcRange = project.findProperty('mc_range') ?: "[${mcv}]"
 def forgeMajor = (project.forge_version.split('\\.')[0]) as int
 tasks.register('dbResources', Sync) {
-    from('../../common/src/main/resources') { include 'assets/**', 'deathbreakdown.png' }
+    from('../resources') { include 'assets/**', 'deathbreakdown.png' }
     from('src/res')
     into res
     inputs.property 'v', "${project.mod_version} ${mcRange} ${forgeMajor}"

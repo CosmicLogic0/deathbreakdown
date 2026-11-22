@@ -37,7 +37,7 @@ tasks.register('dbSources') {
     doLast { vrGenerate(["../src/${loaderName}", '../src/common', '../../core/src/main/java'], gen, ctx) }
 }
 def assets = layout.buildDirectory.dir('assets-res')
-tasks.register('dbAssets', Sync) { from('../../common/src/main/resources') { include 'assets/**', 'deathbreakdown.png' }; into assets }
+tasks.register('dbAssets', Sync) { from('../resources') { include 'assets/**', 'deathbreakdown.png' }; into assets }
 sourceSets.main.java.srcDirs = [gen]
 sourceSets.main.resources.srcDirs = ['src/res', assets]
 compileJava.dependsOn 'dbSources'
