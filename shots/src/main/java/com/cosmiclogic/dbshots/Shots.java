@@ -458,7 +458,13 @@ final class Shots {
         }
         if (detailsStyle != null) {
             mouse(mc, dx, dy);
-            LOG.info("dbshots: hovering [details] at {},{}", dx, dy);
+            var win = mc.getWindow();
+            double gx = mc.mouseHandler.xpos() * win.getGuiScaledWidth() / win.getScreenWidth();
+            double gy = mc.mouseHandler.ypos() * win.getGuiScaledHeight() / win.getScreenHeight();
+            Style at = mc.gui.getChat().getClickedComponentStyleAt(gx, gy);
+            LOG.info("dbshots: hovering [details] at {},{} -> game mouse {},{} (screen {}x{}, gui {}x{}, scale {}) style there: {}",
+                    dx, dy, gx, gy, win.getScreenWidth(), win.getScreenHeight(), win.getGuiScaledWidth(), win.getGuiScaledHeight(),
+                    win.getGuiScale(), at == null ? "none" : at.getHoverEvent());
         }
     }
 
