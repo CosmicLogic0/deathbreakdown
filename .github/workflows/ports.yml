@@ -122,6 +122,9 @@ jobs:
           mkdir -p run/mods && cp "${{ steps.jar.outputs.file }}" run/mods/
           # mc-runtime-test starts the game with $JAVA_HOME (its java input is ignored), so use this version's Java
           echo "JAVA_HOME=$(eval echo \$JAVA_HOME_${{ matrix.java }}_X64)" >> "$GITHUB_ENV"
+      - name: Turn on the client selftest (a real death in the single-player world)
+        if: always() && steps.jar.outputs.file != ''
+        run: mkdir -p run/config && echo "CI only" > run/config/deathbreakdown-ci-selftest.txt
       - name: Client test (real game)
         id: client
         if: always() && steps.jar.outputs.file != ''
@@ -131,13 +134,20 @@ jobs:
           modloader: ${{ startsWith(matrix.loader, 'neo') && 'neoforge' || 'forge' }}
           mc-runtime-test: ${{ (startsWith(matrix.loader, 'neo') && matrix.loader != 'neoforge120') && 'neoforge' || 'forge' }}
           java: ${{ matrix.java }}
+      - name: Client selftest result
+        id: clientst
+        if: always() && steps.client.outcome == 'success'
+        run: |
+          grep -h "client selftest" run/logs/latest.log || true
+          grep -q "Death Breakdown client selftest PASS" run/logs/latest.log
       - name: Write the result
         if: always()
         run: |
           mkdir -p result
           R="result/${{ matrix.id }}.txt"
           B="${{ steps.build.outcome }}"; S="${{ steps.server.outcome }}"; C="${{ steps.client.outcome }}"
-          if [ "$B" = success ] && [ "$S" = success ] && [ "$C" = success ]; then echo "PASS build+server+selftest+client (${{ steps.v.outputs.lv }})" > "$R";
+          [ "$C" = success ] && [ "${{ steps.clientst.outcome }}" != success ] && C=failure
+          if [ "$B" = success ] && [ "$S" = success ] && [ "$C" = success ]; then echo "PASS build+server+selftest+client+client-selftest (${{ steps.v.outputs.lv }})" > "$R";
           else echo "FAIL build=$B server=$S client=$C (${{ steps.v.outputs.lv }})" > "$R"; fi
           if [ "$B" != success ] && [ -f ${{ matrix.dir }}/build.log ]; then python3 - ${{ matrix.dir }}/build.log >> "$R" <<'PY'
           import re, sys

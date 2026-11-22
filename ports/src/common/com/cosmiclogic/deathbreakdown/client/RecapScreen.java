@@ -91,6 +91,7 @@ public class RecapScreen extends Screen {
 
     @Override
     protected void init() {
+        ClientSelfTest.sawRecapScreen = true;
         summary = Draw.wrap(font, RecapText.summary(recap, hearts), Math.max(200, width - 40));
         if (summary.size() > 2) summary = summary.subList(0, 2);
         tip = DeathBreakdown.config.showTip ? RecapText.tip(recap) : "";

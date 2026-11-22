@@ -123,7 +123,9 @@ public final class ClientRecap {
         int at = remember(r);
         Minecraft mc = Minecraft.getInstance();
         if (death) {
+            ClientSelfTest.sawDeathPacket = true;
             if (DeathBreakdown.config.chatSummary && mc.player != null) {
+                ClientSelfTest.sawSummary = true;
                 say(mc, Txt.lit("[" + DeathBreakdown.NAME + "] ").withStyle(ChatFormatting.GOLD)
                         .append(Txt.lit(RecapText.summary(r, DeathBreakdown.config.hearts)).withStyle(ChatFormatting.WHITE))
                         .append(Txt.lit(" Press ").withStyle(ChatFormatting.GRAY))
@@ -139,7 +141,9 @@ public final class ClientRecap {
 
     /** Called after any screen is built. Adds the "Death Breakdown" button to the death screen. */
     public static void onScreenInit(Screen screen, Consumer<Button> addButton) {
+        ClientSelfTest.maybeStart();
         if (!(screen instanceof DeathScreen)) return;
+        ClientSelfTest.sawDeathButton = true;
         addButton.accept(button("☠ " + DeathBreakdown.NAME, 4, 4, 110, 20, () -> open(screen)));
         if (DeathBreakdown.config.openOnDeath) autoOpen(screen);
     }
