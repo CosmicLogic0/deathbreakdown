@@ -8,6 +8,11 @@ You die, and the death message says "slain by Skeleton". But you were also on fi
 
 🧩 **Works with modded mobs, weapons and damage types too.**
 
+## ▶️ How to use
+1. Install it (on the server too, if you play multiplayer). No setup needed.
+2. Die. The recap opens by itself on the death screen (or click **☠ Death Breakdown** in the corner).
+3. Point at a row for every number. Press **K** any time to see it again, and **<** / **>** to look at your last few deaths.
+
 ## 🔥 What it does
 
 ### 💀 A recap the moment you die
@@ -28,11 +33,20 @@ See your health after every hit, and a one-line summary like *"Killed by Skeleto
 ### 🔁 Open it again anytime
 Press **K** to reopen your last recap, or use the **☠ Death Breakdown** button on the death screen.
 
+### 📜 Your last few deaths *(new in 1.1.0)*
+Your **last 5 deaths** are kept, even after you leave, reload or restart. Flip through them with **<** and **>**, or list them with `/db history` and click one.
+
+### 💡 A tip for every death *(new in 1.1.0)*
+One short line that sums it up: *"Lava did 80% of the damage."* or *"Your gear stopped 60% of the damage."*
+
+### 📋 Copy it *(new in 1.1.0)*
+The **Copy** button puts the whole recap on your clipboard as text, ready for Discord or a bug report.
+
 ### 🖥️ Works on servers
 Put it on the server too and players with the mod get the full screen. Players without it can still join and get the recap in chat, with every hit in the hover text.
 
-### 💾 It remembers
-Your settings are saved in `config/deathbreakdown.properties`: the time window (1–60 seconds), which columns you see, hearts or health points, and whether it opens by itself.
+### ⚙️ Settings screen *(new in 1.1.0)*
+Click **Config** in the mod list (or **Settings** in the recap) to change everything with a short explanation for each option: the time window (5–60 seconds), which columns you see, hearts or health points, whether it opens by itself, the chat summary, the tip line and how many deaths are kept. It's all saved in `config/deathbreakdown.properties`.
 
 ## 🎮 Controls
 | Key | What it does |
@@ -41,7 +55,17 @@ Your settings are saved in `config/deathbreakdown.properties`: the time window (
 | **Scroll** | Scroll when there are lots of hits |
 | **Hover a row** | Every detail about that hit |
 
-Change the key in Options → Controls → Key Binds. Commands: `/deathbreakdown` (or `/db`) shows your last recap, `/deathbreakdown reload` reloads the config (ops).
+Change the key in Options → Controls → Key Binds.
+
+| Command | What it does |
+|---|---|
+| `/db` (or `/deathbreakdown`) | Your last recap |
+| `/db history` | Your last deaths, click one to open it |
+| `/db show <number>` | Open one from the history (1 = newest) |
+| `/db copy` | Copy your last recap as text |
+| `/db help` | All of this, in game |
+| `/db player <name>` | Another player's last recap (ops) |
+| `/db reload` | Reload the config and show anything that was wrong in it (ops) |
 
 ## 📦 Requirements
 - **Forge:** Minecraft 1.12.2 to 26.3

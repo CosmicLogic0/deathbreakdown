@@ -6,16 +6,23 @@ import json, os, sys, urllib.request, uuid, hashlib
 TOKEN = os.environ.get('CURSEFORGE_TOKEN', '')
 DRY = os.environ.get('DRY_RUN', 'true') != 'false'
 MOD_ID, PLUGIN_ID = 1808919, 1808923
-VERSION = '1.0.0'
+VERSION = '1.1.0'
 CHANGELOG = open('CHANGELOG.md', encoding='utf-8').read()
-PLUGIN_CHANGELOG = """## 1.0.0
-First release.
-- When a player dies, a short recap shows in chat: what killed them and every hit from the last 10 seconds (hover for details)
-- Click **[Open recap]** for the full recap as a book (it's never added to the inventory)
-- For each hit: who or what hit you, the damage type, the damage, and how much armor, enchantments and other things blocked
-- `/deathbreakdown` (`/db`) shows your last recap again, `/db reload` reloads the config
-- Works with vanilla clients. Paper 1.12.2 to 26.3
-- **Requires LogicLib Plugin**
+PLUGIN_CHANGELOG = """## 1.1.0
+### New
+- **Death history:** each player's last 5 deaths are kept, even after leaving or a restart. `/db history` lists them; click one to open it.
+- **Tip line** in the hover and the book, like "Lava did 80% of the damage."
+- **[copy]** in chat and `/db copy`: the recap as text for Discord or a bug report (Minecraft 1.15+; older servers print the text).
+- `/db help`, `/db show <number>`, and for staff `/db player <name>` (permission `deathbreakdown.others`).
+
+### Improved
+- The [details] hover shows the newest 6 hits, so it always fits on the screen.
+- `/db reload` and the console say exactly what was wrong in config.yml.
+
+### Fixed
+- A value that isn't a number (like `window-seconds: banana`) made the time window 1 second. It now falls back to the default.
+
+**Requires LogicLib Plugin.**
 """
 
 # (file, loaders, minecraft versions, java)

@@ -10,6 +10,11 @@ Your players die and all they get is "slain by Skeleton". This is the **server p
 
 🧩 **Works on vanilla clients. Nothing to install on the player's side.**
 
+## ▶️ How to use
+1. Put **Death Breakdown Plugin** and **LogicLib Plugin** in your `plugins` folder and restart. No setup needed.
+2. When a player dies, a one-line recap appears in their chat. They **hover [details]** for every hit, or **click [Open recap]** for the book.
+3. `/db help` lists everything; `/db history` shows their last few deaths.
+
 ## 🔥 What it does
 
 ### 💬 A recap in chat
@@ -24,8 +29,31 @@ Every hit shows how much **armor** stopped and how much **enchantments** stopped
 ### 🔁 See it again
 `/deathbreakdown` (or `/db`) reopens your last recap anytime.
 
+### 📜 Your last few deaths *(new in 1.1.0)*
+Each player's **last 5 deaths** are kept, even after they leave or the server restarts (`plugins/DeathBreakdown/history`). `/db history` lists them; click one to open it.
+
+### 💡 A tip for every death *(new in 1.1.0)*
+One short line in the hover and the book, like *"Lava did 80% of the damage."*
+
+### 📋 Copy it *(new in 1.1.0)*
+Click **[copy]** (or `/db copy`) to put the recap on your clipboard as text, for Discord or a bug report. Copy links need Minecraft 1.15+; on older servers `/db copy` prints the text instead.
+
+### 👮 For staff *(new in 1.1.0)*
+`/db player <name>` shows another player's last recap (permission `deathbreakdown.others`, ops by default).
+
 ### 💾 It remembers
-Settings live in `plugins/DeathBreakdown/config.yml`: the time window, hearts or health points, chat on death, opening the book on respawn, and which columns show. `/db reload` applies changes.
+Settings live in `plugins/DeathBreakdown/config.yml`: the time window, hearts or health points, chat on death, opening the book on respawn, which columns show, the tip line and how many deaths to keep. `/db reload` applies changes and tells you about any value it couldn't read.
+
+| Command | What it does |
+|---|---|
+| `/db` | Your last recap as a book (in chat on 1.12-1.13) |
+| `/db chat` | The chat summary again, with [details] |
+| `/db history` | Your last deaths, click one to open it |
+| `/db show <number>` | Open one from the history (1 = newest) |
+| `/db copy` | Copy your last recap as text |
+| `/db help` | All of this, in game |
+| `/db player <name>` | Another player's last recap (`deathbreakdown.others`) |
+| `/db reload` | Reload config.yml (`deathbreakdown.reload`) |
 
 ## 🆚 Plugin vs mod
 The plugin gives the same recap in **chat and a book**. The mod adds the **recap screen** and the **K key**, but players have to install it.
