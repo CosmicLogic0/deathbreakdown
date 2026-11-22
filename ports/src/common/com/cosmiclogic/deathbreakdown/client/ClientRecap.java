@@ -16,6 +16,8 @@ import net.minecraft.client.gui.screens.Screen;
 import org.lwjgl.glfw.GLFW;
 //#endif
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 /** Client side: keeps the last recap, the reopen key, and the button on the death screen. */
@@ -38,10 +40,46 @@ public final class ClientRecap {
             GLFW.GLFW_KEY_K, "key.categories.deathbreakdown");
     //#endif
 
-    private static Recap last;
+    /** Recaps this client received, oldest first (newest = the last death), capped at historySize. */
+    private static final List<Recap> HISTORY = new ArrayList<>();
     private static long autoOpened = Long.MIN_VALUE;
 
-    public static Recap last() { return last; }
+    public static Recap last() { return HISTORY.isEmpty() ? null : HISTORY.get(HISTORY.size() - 1); }
+
+    public static List<Recap> history() { return new ArrayList<>(HISTORY); }
+
+    /** Adds a recap (or finds it again); returns its index. */
+    static int remember(Recap r) {
+        for (int i = 0; i < HISTORY.size(); i++) {
+            Recap x = HISTORY.get(i);
+            if (x.timeMs == r.timeMs && x.victim.equals(r.victim)) return i;
+        }
+        int at = HISTORY.size();
+        while (at > 0 && HISTORY.get(at - 1).timeMs > r.timeMs) at--; // keep time order (replays of old deaths)
+        HISTORY.add(at, r);
+        int max = Math.max(1, Math.min(20, DeathBreakdown.config.historySize));
+        while (HISTORY.size() > max) { HISTORY.remove(0); at--; }
+        return Math.max(0, at);
+    }
+
+    /** Set by the loader: does the server we're on have Death Breakdown (its network channel)? */
+    public static java.util.function.BooleanSupplier serverHasMod = () -> false;
+
+    /** Asks the server for the saved recap (after a relog or restart the client has none of its own). */
+    static void requestFromServer(Minecraft mc) {
+        if (mc.player == null) return;
+        //#if MC >= 1.19.3
+        mc.player.connection.sendCommand("deathbreakdown");
+        //#elif MC >= 1.19
+        mc.player.commandUnsigned("deathbreakdown");
+        //#else
+        mc.player.chat("/deathbreakdown");
+        //#endif
+    }
+
+    static void copyToClipboard(String text) {
+        Minecraft.getInstance().keyboardHandler.setClipboard(text);
+    }
 
 
     /** A chat line (overlay = above the hotbar). displayClientMessage was split in 26.1. */
@@ -71,14 +109,20 @@ public final class ClientRecap {
         //#endif
     }
 
-    /** A recap arrived from the server. */
+    /**
+     * A recap arrived from the server. 1.1.0+ servers say whether it's a death that just happened or a replay
+     * (/deathbreakdown, history). The death packet arrives before the client knows its health is 0, so 1.0.0 asked
+     * the wrong question here and opened the recap at once (and never printed the chat summary); now the flag decides.
+     * From a 1.0.0 server (no flag) a recap made in the last 3 seconds counts as a fresh death.
+     */
     public static void receive(String data) {
         Recap r = RecapCodec.decode(data);
         if (r == null) return;
-        last = r;
+        Boolean flag = RecapCodec.isDeath(data);
+        boolean death = flag != null ? flag : Math.abs(System.currentTimeMillis() - r.timeMs) < 3000L;
+        int at = remember(r);
         Minecraft mc = Minecraft.getInstance();
-        boolean dead = mc.player == null || mc.player.isDeadOrDying() || screen(mc) instanceof DeathScreen;
-        if (dead) {
+        if (death) {
             if (DeathBreakdown.config.chatSummary && mc.player != null) {
                 say(mc, Txt.lit("[" + DeathBreakdown.NAME + "] ").withStyle(ChatFormatting.GOLD)
                         .append(Txt.lit(RecapText.summary(r, DeathBreakdown.config.hearts)).withStyle(ChatFormatting.WHITE))
@@ -86,9 +130,10 @@ public final class ClientRecap {
                         .append(OPEN_KEY.getTranslatedKeyMessage().copy().withStyle(ChatFormatting.AQUA))
                         .append(Txt.lit(" to see it again.").withStyle(ChatFormatting.GRAY)), false);
             }
+            // The death screen opens a moment later; onScreenInit opens the recap then (if openOnDeath).
             if (DeathBreakdown.config.openOnDeath && screen(mc) instanceof DeathScreen) autoOpen(screen(mc));
         } else {
-            open(screen(mc)); // came from /deathbreakdown
+            openAt(screen(mc), at); // asked for with /deathbreakdown (show, player)
         }
     }
 
@@ -108,6 +153,7 @@ public final class ClientRecap {
     }
 
     private static void autoOpen(Screen parent) {
+        Recap last = last();
         if (last == null || autoOpened == last.timeMs) return;
         long age = Math.abs(System.currentTimeMillis() - last.timeMs);
         if (age > 60_000L) return; // an old recap, e.g. died again on a server without the mod
@@ -124,11 +170,22 @@ public final class ClientRecap {
     }
 
     public static void open(Screen parent) {
+        openAt(parent, HISTORY.size() - 1);
+    }
+
+    static void openAt(Screen parent, int index) {
         Minecraft mc = Minecraft.getInstance();
-        if (last == null) {
-            say(mc, Txt.lit("No death recap yet.").withStyle(ChatFormatting.GRAY), true);
+        if (HISTORY.isEmpty()) {
+            if (serverHasMod.getAsBoolean()) { requestFromServer(mc); return; }
+            say(mc, Txt.lit("No death recap yet. It shows up here after you die.").withStyle(ChatFormatting.GRAY), true);
             return;
         }
-        setScreen(mc, new RecapScreen(parent, last));
+        setScreen(mc, new RecapScreen(parent, history(), index));
+    }
+
+    /** Leaving a world or server: its recaps belong to it. */
+    public static void clear() {
+        HISTORY.clear();
+        autoOpened = Long.MIN_VALUE;
     }
 }

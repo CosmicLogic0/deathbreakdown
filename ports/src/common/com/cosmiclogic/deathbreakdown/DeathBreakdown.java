@@ -45,7 +45,13 @@ public final class DeathBreakdown {
     }
 
     public static void reloadConfig() {
-        config = RecapConfig.load(platform.configDir().resolve(MOD_ID + ".properties").toFile());
+        config = RecapConfig.load(configFile());
         HITS.setWindowMs(config.windowMs());
+        HITS.setHistorySize(config.historySize);
+        for (String problem : config.problems) LOG.warn("deathbreakdown.properties: {}", problem);
+    }
+
+    public static java.io.File configFile() {
+        return platform.configDir().resolve(MOD_ID + ".properties").toFile();
     }
 }

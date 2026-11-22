@@ -23,7 +23,7 @@ import java.nio.file.Path;
 @Mod(DeathBreakdown.MOD_ID)
 public class DeathBreakdownNeoForge {
 
-    public DeathBreakdownNeoForge(IEventBus modBus, Dist dist) {
+    public DeathBreakdownNeoForge(IEventBus modBus, net.neoforged.fml.ModContainer container, Dist dist) {
         DeathBreakdown.init(new DeathBreakdown.Platform() {
             @Override public String loaderName() { return "NeoForge"; }
             @Override public Path configDir() { return FMLPaths.CONFIGDIR.get(); }
@@ -34,8 +34,9 @@ public class DeathBreakdownNeoForge {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onDamage);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onDeath);
         NeoForge.EVENT_BUS.addListener(this::onLogout);
+        NeoForge.EVENT_BUS.addListener(this::onLogin);
         NeoForge.EVENT_BUS.addListener(this::onCommands);
-        if (dist.isClient()) NeoForgeClient.init(modBus);
+        if (dist.isClient()) NeoForgeClient.init(modBus, container);
     }
 
     private void registerPayloads(RegisterPayloadHandlersEvent event) {
@@ -71,6 +72,10 @@ public class DeathBreakdownNeoForge {
 
     private void onLogout(PlayerEvent.PlayerLoggedOutEvent e) {
         if (e.getEntity() instanceof ServerPlayer) ServerTracker.onLogout((ServerPlayer) e.getEntity());
+    }
+
+    private void onLogin(PlayerEvent.PlayerLoggedInEvent e) {
+        if (e.getEntity() instanceof ServerPlayer) ServerTracker.onLogin((ServerPlayer) e.getEntity());
     }
 
     private void onCommands(RegisterCommandsEvent e) {

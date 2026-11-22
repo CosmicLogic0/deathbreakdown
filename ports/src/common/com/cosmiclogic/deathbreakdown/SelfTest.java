@@ -5,6 +5,9 @@ import com.cosmiclogic.deathbreakdown.core.Hit;
 import com.cosmiclogic.deathbreakdown.core.HitLog;
 import com.cosmiclogic.deathbreakdown.core.Recap;
 import com.cosmiclogic.deathbreakdown.core.RecapCodec;
+import com.cosmiclogic.deathbreakdown.core.RecapConfig;
+import com.cosmiclogic.deathbreakdown.core.RecapStore;
+import com.cosmiclogic.deathbreakdown.core.RecapText;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
@@ -20,6 +23,8 @@ import net.minecraft.world.damagesource.DamageSources;
 import net.minecraft.world.entity.EntitySpawnReason;
 //#endif
 
+import java.io.File;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -86,8 +91,56 @@ public final class SelfTest {
             check(back != null && back.hits.size() == 2 && "Iron Sword".equals(back.hits.get(1).weapon), "packet round trip");
             report.append("packet ok; ");
 
+            // 1.1.0: death/replay flag, history, saving in the world folder, capped hover, tip, broken config, Nether
+            check(Boolean.TRUE.equals(RecapCodec.isDeath(RecapCodec.encodeDeath(r))), "death flag");
+            check(Boolean.FALSE.equals(RecapCodec.isDeath(RecapCodec.encodeReplay(r))), "replay flag");
+            HitLog hist = new HitLog(10_000);
+            hist.setHistorySize(3);
+            for (int i = 0; i < 5; i++) {
+                hist.add(id, new Hit(now + i, "Lava", "", Hit.Kind.ENVIRONMENT, "lava", 4, 0, 0, 0, 0, 0, 4, 0, false));
+                hist.onDeath(id, "Tester", "death " + i, now + i, null);
+            }
+            List<Recap> h = hist.history(id);
+            check(h.size() == 3 && "death 4".equals(h.get(2).deathMessage), "history keeps the newest 3");
+            File dir = out.getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).resolve(DeathBreakdown.MOD_ID).toFile();
+            UUID tmp = UUID.randomUUID();
+            check(RecapStore.save(dir, tmp, h), "history saved in " + dir);
+            List<Recap> loaded = RecapStore.load(dir, tmp);
+            check(loaded.size() == 3 && "death 2".equals(loaded.get(0).deathMessage), "history loaded back");
+            check(RecapStore.fileFor(dir, tmp).delete(), "test file removed");
+            report.append("history + world save ok; ");
+
+            List<Hit> many = new java.util.ArrayList<>();
+            for (int i = 0; i < 30; i++) many.add(new Hit(now - 3000 + i * 100, "Bee", "", Hit.Kind.MOB, "sting", 1, 0, 0, 0, 0, 0, 1, 20 - i * 0.5F, i == 29));
+            Recap swarm = new Recap("Tester", "Tester was stung to death", now, 10_000, many);
+            String hover = ServerTracker.hover(swarm, true).getString();
+            int lines = hover.split("\n").length;
+            check(lines < 60, "hover fits on screen (" + lines + " lines)");
+            check(ServerTracker.chatSummary(swarm, true).getString().contains("[copy]"), "copy link");
+            report.append("hover capped (").append(lines).append(" lines); ");
+
+            File bad = new File(dir, "selftest-broken.properties");
+            check(bad.getParentFile().isDirectory() || bad.getParentFile().mkdirs(), "test dir");
+            java.nio.file.Files.write(bad.toPath(), "windowSeconds=banana\nhearts=maybe\nhistorySize=999\n".getBytes("UTF-8"));
+            RecapConfig bc = RecapConfig.load(bad);
+            check(bc.windowSeconds == 10 && bc.hearts && bc.historySize == 20 && bc.problems.size() >= 3, "broken config falls back: " + bc.problems);
+            check(bad.delete(), "test config removed");
+            report.append("broken config ok; ");
+
+            ServerLevel nether = out.getServer().getLevel(net.minecraft.world.level.Level.NETHER);
+            check(nether != null, "nether loaded");
+            //#if MC >= 1.19.4
+            DamageSource netherLava = nether.damageSources().lava();
+            //#else
+            DamageSource netherLava = DamageSource.LAVA;
+            //#endif
+            check("Lava".equals(ServerTracker.sourceName(netherLava)), "nether lava name = " + ServerTracker.sourceName(netherLava));
+            report.append("nether ok; ");
+
             check(DeathBreakdown.config.windowSeconds >= 1, "config loaded");
-            report.append("config ok (window ").append(DeathBreakdown.config.windowSeconds).append("s)");
+            check(!RecapText.tip(r).isEmpty() || r.hits.size() < 2, "tip");
+            report.append("config ok (window ").append(DeathBreakdown.config.windowSeconds).append("s, history ")
+                    .append(DeathBreakdown.config.historySize).append(")");
 
             DeathBreakdown.LOG.info("Death Breakdown selftest PASS: {}", report);
             RecapCommand.ok(out, "Death Breakdown selftest PASS");

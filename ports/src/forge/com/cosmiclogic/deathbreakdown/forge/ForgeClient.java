@@ -1,6 +1,7 @@
 package com.cosmiclogic.deathbreakdown.forge;
 
 import com.cosmiclogic.deathbreakdown.client.ClientRecap;
+import com.cosmiclogic.deathbreakdown.client.ConfigScreen;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 //#if MC < 1.21.6
@@ -25,6 +26,25 @@ final class ForgeClient {
 
     static void init() {
         registerKey();
+        registerConfigScreen();
+        //#if MC >= 1.20.2
+        ClientRecap.serverHasMod = () -> {
+            net.minecraft.client.multiplayer.ClientPacketListener c = net.minecraft.client.Minecraft.getInstance().getConnection();
+            return c != null && DeathBreakdownForge.CHANNEL.isRemotePresent(c.getConnection());
+        };
+        //#else
+        ClientRecap.serverHasMod = () -> {
+            net.minecraft.client.multiplayer.ClientPacketListener c = net.minecraft.client.Minecraft.getInstance().getConnection();
+            return c != null && DeathBreakdownForge.CHANNEL.isRemotePresent(c.getConnection());
+        };
+        //#endif
+        //#if MC >= 1.21.6
+        net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggingOut.BUS.addListener(e -> ClientRecap.clear());
+        //#elif MC >= 1.19
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggingOut e) -> ClientRecap.clear());
+        //#else
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggedOutEvent e) -> ClientRecap.clear());
+        //#endif
         //#if MC >= 1.21.6
         InputEvent.Key.BUS.addListener(e -> ClientRecap.onKey());
         ScreenEvent.Init.Post.BUS.addListener(e -> ClientRecap.onScreenInit(e.getScreen(), e::addListener));
@@ -37,6 +57,20 @@ final class ForgeClient {
         //#else
         MinecraftForge.EVENT_BUS.addListener((InputEvent.KeyInputEvent e) -> ClientRecap.onKey());
         MinecraftForge.EVENT_BUS.addListener((GuiScreenEvent.InitGuiEvent.Post e) -> ClientRecap.onScreenInit(e.getGui(), e::addWidget));
+        //#endif
+    }
+
+    /** "Config" button in the mod list opens Death Breakdown's settings. */
+    private static void registerConfigScreen() {
+        //#if MC >= 1.19
+        net.minecraftforge.fml.ModLoadingContext.get().registerExtensionPoint(net.minecraftforge.client.ConfigScreenHandler.ConfigScreenFactory.class,
+                () -> new net.minecraftforge.client.ConfigScreenHandler.ConfigScreenFactory((mc, parent) -> new ConfigScreen(parent)));
+        //#elif MC >= 1.18
+        net.minecraftforge.fml.ModLoadingContext.get().registerExtensionPoint(net.minecraftforge.client.ConfigGuiHandler.ConfigGuiFactory.class,
+                () -> new net.minecraftforge.client.ConfigGuiHandler.ConfigGuiFactory((mc, parent) -> new ConfigScreen(parent)));
+        //#else
+        net.minecraftforge.fml.ModLoadingContext.get().registerExtensionPoint(net.minecraftforge.fml.ExtensionPoint.CONFIGGUIFACTORY,
+                () -> (mc, parent) -> new ConfigScreen(parent));
         //#endif
     }
 

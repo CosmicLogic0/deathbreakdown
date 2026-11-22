@@ -11,10 +11,18 @@ import net.neoforged.neoforge.common.NeoForge;
 final class NeoForgeClient {
     private NeoForgeClient() {}
 
-    static void init(IEventBus modBus) {
+    static void init(IEventBus modBus, net.neoforged.fml.ModContainer container) {
+        // "Config" button in the mod list opens Death Breakdown's settings.
+        container.registerExtensionPoint(net.neoforged.neoforge.client.gui.IConfigScreenFactory.class,
+                (c, parent) -> new com.cosmiclogic.deathbreakdown.client.ConfigScreen(parent));
         modBus.addListener((RegisterKeyMappingsEvent e) -> e.register(ClientRecap.OPEN_KEY));
         NeoForge.EVENT_BUS.addListener((InputEvent.Key e) -> ClientRecap.onKey());
         NeoForge.EVENT_BUS.addListener((ScreenEvent.Init.Post e) -> ClientRecap.onScreenInit(e.getScreen(), e::addListener));
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut e) -> ClientRecap.clear());
+        ClientRecap.serverHasMod = () -> {
+            net.minecraft.client.multiplayer.ClientPacketListener c = net.minecraft.client.Minecraft.getInstance().getConnection();
+            return c != null && c.hasChannel(RecapPayload.TYPE);
+        };
     }
 
     static void receive(String data) {

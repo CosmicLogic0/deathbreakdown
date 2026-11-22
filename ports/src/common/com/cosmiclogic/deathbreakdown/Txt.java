@@ -37,6 +37,19 @@ public final class Txt {
         return lit(text).withStyle(style);
     }
 
+    /** A colored piece of text that shows {@code hover} and copies {@code copy} to the clipboard when clicked. */
+    public static MutableComponent copyClick(String text, int rgb, Component hover, String copy) {
+        Style style = Style.EMPTY.withColor(TextColor.fromRgb(rgb))
+                //#if MC >= 1.21.5
+                .withHoverEvent(new HoverEvent.ShowText(hover))
+                .withClickEvent(new ClickEvent.CopyToClipboard(copy));
+                //#else
+                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover))
+                .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, copy));
+                //#endif
+        return lit(text).withStyle(style);
+    }
+
     public static void send(ServerPlayer p, Component c) {
         //#if MC >= 1.19
         p.sendSystemMessage(c);

@@ -100,11 +100,13 @@ public class DeathBreakdownForge {
         LivingHurtEvent.BUS.addListener(this::onHurt);
         LivingDeathEvent.BUS.addListener(this::onDeath);
         PlayerEvent.PlayerLoggedOutEvent.BUS.addListener(this::onLogout);
+        PlayerEvent.PlayerLoggedInEvent.BUS.addListener(this::onLogin);
         RegisterCommandsEvent.BUS.addListener(this::onCommands);
         //#else
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, LivingHurtEvent.class, this::onHurt);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, LivingDeathEvent.class, this::onDeath);
         MinecraftForge.EVENT_BUS.addListener(this::onLogout);
+        MinecraftForge.EVENT_BUS.addListener(this::onLogin);
         MinecraftForge.EVENT_BUS.addListener(this::onCommands);
         //#endif
         if (FMLEnvironment.dist == Dist.CLIENT) ForgeClient.init();
@@ -140,6 +142,15 @@ public class DeathBreakdownForge {
         Entity en = e.getPlayer();
         //#endif
         if (en instanceof ServerPlayer) ServerTracker.onLogout((ServerPlayer) en);
+    }
+
+    private void onLogin(PlayerEvent.PlayerLoggedInEvent e) {
+        //#if MC >= 1.19
+        Entity en = e.getEntity();
+        //#else
+        Entity en = e.getPlayer();
+        //#endif
+        if (en instanceof ServerPlayer) ServerTracker.onLogin((ServerPlayer) en);
     }
 
     private void onCommands(RegisterCommandsEvent e) {
