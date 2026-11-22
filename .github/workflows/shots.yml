@@ -113,7 +113,7 @@ jobs:
           find ../pjars -name "*.jar" ! -name "*-sources.jar" -exec cp {} plugins/ \;
           ls plugins
           echo "eula=true" > eula.txt
-          printf 'online-mode=false\nlevel-type=minecraft\\:flat\ngenerate-structures=false\ndifficulty=normal\nspawn-protection=0\ngamemode=survival\nallow-flight=true\nview-distance=12\nenforce-secure-profile=false\nspawn-monsters=false\nspawn-animals=false\nspawn-npcs=false\n' > server.properties
+          printf 'online-mode=false\nlevel-type=minecraft\\:flat\ngenerate-structures=false\ndifficulty=normal\nspawn-protection=0\ngamemode=survival\nallow-flight=true\nview-distance=12\nenforce-secure-profile=false\nspawn-animals=false\nspawn-npcs=false\n' > server.properties
           python3 - <<'PY'
           import hashlib, json, uuid
           h = bytearray(hashlib.md5(b"OfflinePlayer:Offline").digest())

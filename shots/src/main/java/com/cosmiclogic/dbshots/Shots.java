@@ -6,6 +6,7 @@ import net.minecraft.client.GraphicsStatus;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
+import net.minecraft.client.tutorial.TutorialSteps;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.components.Button;
@@ -125,6 +126,7 @@ final class Shots {
             LOG.info("dbshots: world shown, holding the client open");
             return;
         }
+        mc.getToasts().clear(); // no tutorial/advancement/recipe pop-ups in the pictures
         if (step >= STEPS.size()) return;
         if (wait > 0) {
             wait--;
@@ -157,6 +159,8 @@ final class Shots {
         mc.options.graphicsMode().set(GraphicsStatus.FANCY);
         mc.options.renderDistance().set(12);
         mc.options.hideGui = true;
+        mc.options.tutorialStep = TutorialSteps.NONE;
+        mc.getTutorial().setStep(TutorialSteps.NONE);
         base = mc.player.blockPosition();
         String p = plugin() ? "plugin-" : "mod-";
         BlockPos a = base.offset(4, 0, 4);      // zombie + skeleton fight
@@ -166,8 +170,9 @@ final class Shots {
         cmds(List.of(
                 "gamerule sendCommandFeedback false", "gamerule logAdminCommands false", "gamerule doDaylightCycle false",
                 "gamerule doWeatherCycle false", "gamerule doMobSpawning false", "gamerule keepInventory true",
-                "gamerule doImmediateRespawn false", "time set 6000", "weather clear", "difficulty normal",
-                "kill @e[type=!player]",
+                "gamerule doImmediateRespawn false", "gamerule naturalRegeneration false",
+                "gamerule announceAdvancements false", "time set 6000", "weather clear",
+                plugin() ? "time set 6000" : "difficulty normal", KILL_MOBS,
                 fill(l.offset(-2, -1, -2), l.offset(2, -1, 2), "stone_bricks"),
                 fill(l.offset(-1, -1, -1), l.offset(1, -1, 1), "lava")), 40);
 
@@ -178,10 +183,10 @@ final class Shots {
                 "item replace entity @s armor.legs with iron_leggings",
                 "item replace entity @s armor.feet with iron_boots[enchantments={levels:{\"minecraft:feather_falling\":4}}]",
                 "item replace entity @s weapon.mainhand with iron_sword",
-                "effect give @s instant_health 1 10 true", "effect give @s saturation 1 10 true",
-                tp(a, 0, 8),
-                summon("zombie", a.offset(0, 0, 3), 180, "HandItems:[{id:\"minecraft:iron_sword\",count:1},{}],ArmorItems:[{},{},{},{id:\"minecraft:iron_helmet\",count:1}]"),
-                summon("skeleton", a.offset(3, 0, 9), 160, "HandItems:[{id:\"minecraft:bow\",count:1},{}],ArmorItems:[{},{},{},{id:\"minecraft:chainmail_helmet\",count:1}]")), 60);
+                "effect give @s instant_health 1 10 true",
+                tp(a, 0, 12),
+                summon("zombie", a.offset(-2, 0, 3), 210, "HandItems:[{id:\"minecraft:iron_sword\",count:1},{}],ArmorItems:[{},{},{},{id:\"minecraft:iron_helmet\",count:1}]"),
+                summon("skeleton", a.offset(3, 0, 8), 160, "HandItems:[{id:\"minecraft:bow\",count:1},{}],ArmorItems:[{},{},{},{id:\"minecraft:chainmail_helmet\",count:1}]")), 60);
         STEPS.add(m -> {
             m.options.setCameraType(CameraType.THIRD_PERSON_BACK);
             m.options.hideGui = true;
@@ -190,6 +195,7 @@ final class Shots {
         STEPS.add(m -> save(m, p + "fight"));
         STEPS.add(m -> {
             m.options.setCameraType(CameraType.FIRST_PERSON);
+            m.gui.getChat().clearMessages(false);
             cmd(m, tpUp(a, 7));
             return 40; // the fall
         });
@@ -212,10 +218,7 @@ final class Shots {
                 return 45;
             });
             STEPS.add(m -> save(m, p + "death-screen"));
-            STEPS.add(m -> {
-                pressDeathBreakdownButton(m);
-                return 15;
-            });
+            openRecapFromDeathScreen();
             STEPS.add(m -> save(m, p + "recap-mobs"));
             STEPS.add(m -> {
                 hoverFinalBlow(m);
@@ -226,9 +229,14 @@ final class Shots {
         }
 
         // ---- 2: fall into lava (Fire Protection IV)
-        cmds(List.of("kill @e[type=!player]",
+        STEPS.add(m -> {
+            m.gui.getChat().clearMessages(false);
+            return 1;
+        });
+        cmds(List.of(KILL_MOBS,
+                "item replace entity @s armor.head with air", "item replace entity @s armor.legs with air",
+                "item replace entity @s armor.feet with air",
                 "item replace entity @s armor.chest with iron_chestplate[enchantments={levels:{\"minecraft:fire_protection\":4}}]",
-                "item replace entity @s armor.feet with iron_boots",
                 "effect give @s instant_health 1 10 true", tpUp(l, 6)), 1);
         untilDead();
         if (plugin()) {
@@ -248,16 +256,17 @@ final class Shots {
                 return 10;
             });
         } else {
-            STEPS.add(m -> {
-                pressDeathBreakdownButton(m);
-                return 15;
-            });
+            openRecapFromDeathScreen();
             STEPS.add(m -> save(m, p + "recap-lava"));
             respawn();
         }
 
         // ---- 3: a fall, then a creeper (iron chestplate with Blast Protection IV only)
-        cmds(List.of("kill @e[type=!player]",
+        STEPS.add(m -> {
+            m.gui.getChat().clearMessages(false);
+            return 1;
+        });
+        cmds(List.of(KILL_MOBS,
                 "item replace entity @s armor.head with air", "item replace entity @s armor.legs with air",
                 "item replace entity @s armor.feet with air",
                 "item replace entity @s armor.chest with iron_chestplate[enchantments={levels:{\"minecraft:blast_protection\":4}}]",
@@ -276,10 +285,7 @@ final class Shots {
             });
             STEPS.add(m -> save(m, p + "chat-command"));
         } else {
-            STEPS.add(m -> {
-                pressDeathBreakdownButton(m);
-                return 15;
-            });
+            openRecapFromDeathScreen();
             STEPS.add(m -> save(m, p + "recap-creeper"));
             respawn();
             // chat close-up: the summary line after each death
@@ -298,12 +304,16 @@ final class Shots {
                 return 40;
             });
             STEPS.add(m -> {
+                m.options.hideGui = true;
+                parkMouse(m);
                 cmd(m, "deathbreakdown");
-                return 30;
+                return 10;
             });
+            STEPS.add(m -> m.screen != null && m.screen.getClass().getSimpleName().contains("RecapScreen") ? 15 : REPEAT);
             STEPS.add(m -> save(m, p + "reopen"));
             // the key bind in Controls
             STEPS.add(m -> {
+                guiScale(m, 4);
                 m.setScreen(keyBindsScreen(m));
                 return 10;
             });
@@ -361,6 +371,26 @@ final class Shots {
 
     // ------------------------------------------------------------------ helpers
 
+    private static final String KILL_MOBS = "execute as @e[type=!player] run kill @s";
+
+    /** Waits for the death screen's Death Breakdown button, presses it, then waits for the recap screen. */
+    private static void openRecapFromDeathScreen() {
+        STEPS.add(m -> {
+            if (!(m.screen instanceof DeathScreen)) return REPEAT;
+            return pressDeathBreakdownButton(m) ? 2 : REPEAT;
+        });
+        STEPS.add(m -> {
+            if (m.screen == null || !m.screen.getClass().getSimpleName().contains("RecapScreen")) return REPEAT;
+            m.options.hideGui = true;
+            parkMouse(m);
+            return 10;
+        });
+    }
+
+    private static void parkMouse(Minecraft mc) {
+        mouse(mc, mc.getWindow().getGuiScaledWidth() - 2, 2);
+    }
+
     private static void untilDead() {
         STEPS.add(m -> m.screen instanceof DeathScreen ? 1 : REPEAT);
     }
@@ -378,17 +408,17 @@ final class Shots {
         });
     }
 
-    private static void pressDeathBreakdownButton(Minecraft mc) {
+    private static boolean pressDeathBreakdownButton(Minecraft mc) {
         Screen s = mc.screen;
-        if (s == null) return;
+        if (s == null) return false;
         for (var child : s.children()) {
             if (child instanceof Button b && b.getMessage().getString().contains("Death Breakdown")) {
                 b.onPress();
                 LOG.info("dbshots: pressed the Death Breakdown button");
-                return;
+                return true;
             }
         }
-        LOG.warn("dbshots: no Death Breakdown button on {}", s.getClass().getName());
+        return false;
     }
 
     /** Moves the mouse over the last (final blow) row of the recap table. */
@@ -518,6 +548,8 @@ final class Shots {
     }
 
     private static int save(Minecraft mc, String name) {
+        mc.getToasts().clear();
+        LOG.info("dbshots: shooting {} on {}", name, mc.screen == null ? "no screen" : mc.screen.getClass().getSimpleName());
         int w = mc.getMainRenderTarget().width, h = mc.getMainRenderTarget().height;
         Screenshot.grab(mc.gameDirectory, "deathbreakdown-" + name + ".png", mc.getMainRenderTarget(),
                 msg -> LOG.info("dbshots: saved {} ({}x{}) {}", name, w, h, msg.getString()));
