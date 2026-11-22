@@ -58,7 +58,20 @@ public final class RecapCommand {
         send(s, Txt.lit(text));
     }
 
+    /** Replies sent straight to a player (counted for the client selftest). */
+    public static volatile int directReplies;
+
+    /**
+     * Players get the reply as a system message, so servers with the sendCommandFeedback game rule off still show
+     * /deathbreakdown help, history and the rest (sendSuccess is hidden by that rule). Others (console) as usual.
+     */
     static void send(CommandSourceStack s, Component c) {
+        Entity e = s.getEntity();
+        if (e instanceof ServerPlayer) {
+            Txt.send((ServerPlayer) e, c);
+            directReplies++;
+            return;
+        }
         //#if MC >= 1.20
         s.sendSuccess(() -> c, false);
         //#else

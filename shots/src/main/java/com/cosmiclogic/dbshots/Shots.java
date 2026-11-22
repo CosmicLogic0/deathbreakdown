@@ -204,7 +204,12 @@ final class Shots {
         });
         cmds(List.of("data merge entity @e[type=zombie,limit=1,sort=nearest] {NoAI:0b}",
                 "data merge entity @e[type=skeleton,limit=1,sort=nearest] {NoAI:0b}"), 1);
-        untilDead();
+        // If the fight drags on (easy difficulty, missed arrows), walk the zombie back to the player every 5 s.
+        STEPS.add(m -> {
+            if (m.screen instanceof DeathScreen) return 1;
+            if (++fightTicks % 100 == 0) cmd(m, "execute at @s run tp @e[type=zombie,limit=1,sort=nearest] ^ ^ ^1.5 facing entity @s");
+            return REPEAT;
+        });
         if (plugin()) {
             STEPS.add(m -> {
                 m.options.hideGui = false;
@@ -229,7 +234,7 @@ final class Shots {
             });
             STEPS.add(m -> save(m, p + "recap-hover"));
             respawn();
-            chatHover(p);
+            chatLine(p);
         }
 
         // ---- 2: fall into lava (Fire Protection IV)
@@ -338,30 +343,19 @@ final class Shots {
         });
     }
 
-    /** Mod: the chat line after a death, with the mouse on [details]. */
-    private static void chatHover(String p) {
+    /** Mod: the chat line after a death ("Press K to see it again"). */
+    private static void chatLine(String p) {
         STEPS.add(m -> {
             m.options.hideGui = false;
-            guiScale(m, 2);
+            guiScale(m, 3);
             m.setScreen(new ChatScreen(""));
-            return 10;
+            parkMouse(m);
+            return 15;
         });
-        STEPS.add(m -> {
-            findChatStyles(m);
-            if (detailsStyle == null) return REPEAT;
-            hoverTicks = 0;
-            return 1;
-        });
-        STEPS.add(m -> {
-            mouse(m, hoverX, hoverY);
-            if (m.screen != null) m.screen.mouseMoved(hoverX, hoverY);
-            return ++hoverTicks < 10 ? REPEAT : 1;
-        });
-        STEPS.add(m -> save(m, p + "chat-hover"));
+        STEPS.add(m -> save(m, p + "chat-line"));
         STEPS.add(m -> {
             hold(m);
             m.options.hideGui = true;
-            guiScale(m, 3);
             return 10;
         });
     }
@@ -443,6 +437,8 @@ final class Shots {
     }
 
     // ------------------------------------------------------------------ helpers
+
+    private static int fightTicks;
 
     private static final String KILL_MOBS = "execute as @e[type=!player] run kill @s";
 

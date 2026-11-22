@@ -101,7 +101,7 @@ public class ConfigScreen extends Screen {
         y += step;
         add(left, y, w, () -> "Keep after restart: " + onOff(c.saveHistory), () -> c.saveHistory = !c.saveHistory,
                 "Save your recent deaths in the world folder so they survive leaving and restarting.");
-        y += step + 8;
+        y += step + 14;
         int cw = (2 * w + gap - 3 * 4) / 4;
         String[] names = {"Time", "Hit by", "Type", "Damage", "Armor", "Enchants", "Other", "Health"};
         String[] helps = {"Seconds before death.", "Who or what hit you, with the weapon.", "The damage type (Melee, Arrow, Lava...).",
@@ -187,7 +187,7 @@ public class ConfigScreen extends Screen {
 
     private void draw(Draw g, int mx, int my) {
         g.centered(font, title.getString(), width / 2, 12, 0xFFAA00);
-        g.centered(font, "Columns in the recap", width / 2, 36 + 4 * 24 - 2, 0xAAAAAA);
+        g.centered(font, "Columns in the recap", width / 2, 36 + 4 * 24 + 3, 0xAAAAAA);
         String help = status;
         if (help.isEmpty()) {
             for (Entry e : entries) {

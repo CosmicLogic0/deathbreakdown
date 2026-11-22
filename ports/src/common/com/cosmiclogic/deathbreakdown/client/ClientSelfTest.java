@@ -20,7 +20,8 @@ public final class ClientSelfTest {
     private ClientSelfTest() {}
 
     static volatile boolean sawDeathPacket, sawSummary, sawDeathButton, sawRecapScreen, sawReopen;
-    private static boolean started, enabled, done, reopened, hurt, finalHit, holding;
+    private static boolean started, enabled, done, reopened, hurt, finalHit, holding, helpAsked;
+    private static volatile boolean helpDone, helpOk;
     private static long startAt, hurtAt, finalAt, lastLog;
 
     /** Invisible, doesn't pause: keeps the client test from ending before this test is done. */
@@ -102,11 +103,27 @@ public final class ClientSelfTest {
             sawReopen = ClientRecap.screen(mc) instanceof RecapScreen;
             return;
         }
-        if (reopened) {
+        if (reopened && !helpAsked) {
+            helpAsked = true;
+            // /deathbreakdown help typed by the player reaches them even when sendCommandFeedback is off
+            server.execute(() -> {
+                ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
+                int before = com.cosmiclogic.deathbreakdown.RecapCommand.directReplies;
+                try {
+                    server.getCommands().getDispatcher().execute("deathbreakdown help", sp.createCommandSourceStack());
+                } catch (Exception e) {
+                    DeathBreakdown.LOG.error("Death Breakdown client selftest: /deathbreakdown help failed", e);
+                }
+                helpOk = com.cosmiclogic.deathbreakdown.RecapCommand.directReplies > before;
+                helpDone = true;
+            });
+            return;
+        }
+        if (reopened && helpDone) {
             String missing = (sawDeathPacket ? "" : " death-packet") + (sawSummary ? "" : " chat-summary")
                     + (sawDeathButton ? "" : " death-screen-button") + (sawRecapScreen ? "" : " auto-open")
-                    + (sawReopen ? "" : " reopen");
-            finish(missing.isEmpty() ? "PASS: death packet flagged, chat summary, death screen button, recap opened by itself, reopened ("
+                    + (sawReopen ? "" : " reopen") + (helpOk ? "" : " help-reply");
+            finish(missing.isEmpty() ? "PASS: death packet flagged, chat summary, death screen button, recap opened by itself, reopened, help reply ("
                     + ClientRecap.history().size() + " in history)" : "FAIL: missing" + missing);
         }
     }
