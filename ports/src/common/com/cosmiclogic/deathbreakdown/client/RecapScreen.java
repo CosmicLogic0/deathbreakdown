@@ -95,7 +95,9 @@ public class RecapScreen extends Screen {
         summary = Draw.wrap(font, RecapText.summary(recap, hearts), Math.max(200, width - 40));
         if (summary.size() > 2) summary = summary.subList(0, 2);
         tip = DeathBreakdown.config.showTip ? RecapText.tip(recap) : "";
-        legend = Draw.wrap(font, RecapText.LEGEND, Math.max(120, width - 20));
+        legend = new ArrayList<>();
+        int legendMax = Math.max(120, width - 20);
+        for (String l : RecapText.legendLines(font::width, legendMax)) legend.addAll(Draw.wrap(font, l, legendMax));
         int y0 = history.size() > 1 ? 42 : 32;
         top = y0 + summary.size() * 10 + (tip.isEmpty() ? 0 : 10) + 8;
 

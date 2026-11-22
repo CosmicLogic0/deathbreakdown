@@ -57,7 +57,11 @@ public class RecapScreen112 extends GuiScreen {
         summary = wrap(RecapText.summary(recap, hearts), Math.max(200, width - 40));
         if (summary.size() > 2) summary = summary.subList(0, 2);
         tip = DeathBreakdown112.config.showTip ? RecapText.tip(recap) : "";
-        legend = wrap(RecapText.LEGEND, Math.max(120, width - 20));
+        legend = new ArrayList<String>();
+        final int legendMax = Math.max(120, width - 20);
+        for (String l : RecapText.legendLines(new RecapText.Width() {
+            @Override public int of(String s) { return fontRenderer.getStringWidth(s); }
+        }, legendMax)) legend.addAll(wrap(l, legendMax));
         int y0 = history.size() > 1 ? 42 : 32;
         top = y0 + summary.size() * 10 + (tip.isEmpty() ? 0 : 10) + 8;
 

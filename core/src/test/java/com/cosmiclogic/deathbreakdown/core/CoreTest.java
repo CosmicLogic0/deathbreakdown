@@ -425,6 +425,15 @@ public final class CoreTest {
         yes(!c.problems.isEmpty(), "folder reported");
     }
 
+    public static void testLegendKeepsEntriesWhole() {
+        RecapText.Width chars = new RecapText.Width() { public int of(String s) { return s.length(); } };
+        eq(1, RecapText.legendLines(chars, 500).size()); // wide window: one line
+        java.util.List<String> two = RecapText.legendLines(chars, 70);
+        eq(2, two.size());
+        eq("Other = Resistance, absorption, shield", two.get(1)); // never split inside an entry
+        eq(3, RecapText.legendLines(chars, 40).size());
+    }
+
     public static void testAllColumnsOffKeepsOne() throws Exception {
         File f = new File("build/coretest/cols-" + System.nanoTime() + ".properties");
         java.io.FileOutputStream o = new java.io.FileOutputStream(f);
