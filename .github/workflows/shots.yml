@@ -9,7 +9,7 @@ on:
     inputs:
       plugin_run:
         description: 'Plugin repo run id whose jar passed every Paper test'
-        default: '44027372790'
+        default: '44980781365'
   push:
     branches: [main]
     paths: ['shots/**', '.github/workflows/shots.yml']
@@ -19,7 +19,7 @@ permissions:
   actions: read
 
 env:
-  PLUGIN_RUN: ${{ inputs.plugin_run || '44027372790' }}
+  PLUGIN_RUN: ${{ inputs.plugin_run || '44980781365' }}
 
 jobs:
   helper:
@@ -56,7 +56,7 @@ jobs:
         run: |
           mkdir -p run/mods run/config
           git fetch --depth=1 origin port-results
-          git show origin/port-results:jars/deathbreakdown-1.0.0+neoforge-1.21.1.jar > run/mods/deathbreakdown-1.0.0+neoforge-1.21.1.jar
+          git show origin/port-results:jars/deathbreakdown-1.1.0+neoforge-1.21.1.jar > run/mods/deathbreakdown-1.1.0+neoforge-1.21.1.jar
           cp helper/*.jar run/mods/
           printf 'openOnDeath=false\n' > run/config/deathbreakdown.properties
           echo mod > run/config/dbshots.txt

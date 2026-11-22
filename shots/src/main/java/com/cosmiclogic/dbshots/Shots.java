@@ -229,6 +229,7 @@ final class Shots {
             });
             STEPS.add(m -> save(m, p + "recap-hover"));
             respawn();
+            chatHover(p);
         }
 
         // ---- 2: fall into lava (Fire Protection IV)
@@ -289,6 +290,13 @@ final class Shots {
         } else {
             openRecapFromDeathScreen();
             STEPS.add(m -> save(m, p + "recap-creeper"));
+            STEPS.add(m -> pressButton(m, "Settings") ? 10 : REPEAT);
+            STEPS.add(m -> m.screen != null && m.screen.getClass().getSimpleName().contains("ConfigScreen") ? 1 : REPEAT);
+            STEPS.add(m -> {
+                parkMouse(m);
+                return 10;
+            });
+            STEPS.add(m -> save(m, p + "settings"));
             respawn();
             // reopen with /deathbreakdown, over the world
             STEPS.add(m -> {
@@ -318,6 +326,9 @@ final class Shots {
             STEPS.add(m -> save(m, p + "key-binds"));
         }
 
+        chatCommand(p, "deathbreakdown history", "history");
+        chatCommand(p, "deathbreakdown help", "help");
+
         STEPS.add(m -> {
             Hold.death = false;
             m.options.hideGui = false;
@@ -325,6 +336,67 @@ final class Shots {
             LOG.info("dbshots: done");
             return 1;
         });
+    }
+
+    /** Mod: the chat line after a death, with the mouse on [details]. */
+    private static void chatHover(String p) {
+        STEPS.add(m -> {
+            m.options.hideGui = false;
+            guiScale(m, 2);
+            m.setScreen(new ChatScreen(""));
+            return 10;
+        });
+        STEPS.add(m -> {
+            findChatStyles(m);
+            if (detailsStyle == null) return REPEAT;
+            hoverTicks = 0;
+            return 1;
+        });
+        STEPS.add(m -> {
+            mouse(m, hoverX, hoverY);
+            if (m.screen != null) m.screen.mouseMoved(hoverX, hoverY);
+            return ++hoverTicks < 10 ? REPEAT : 1;
+        });
+        STEPS.add(m -> save(m, p + "chat-hover"));
+        STEPS.add(m -> {
+            hold(m);
+            m.options.hideGui = true;
+            guiScale(m, 3);
+            return 10;
+        });
+    }
+
+    /** Runs a command the way a player types it and shoots the open chat with its answer. */
+    private static void chatCommand(String p, String command, String name) {
+        STEPS.add(m -> {
+            m.gui.getChat().clearMessages(false);
+            m.options.hideGui = false;
+            guiScale(m, 3);
+            m.player.connection.sendCommand(command);
+            return 30;
+        });
+        STEPS.add(m -> {
+            m.setScreen(new ChatScreen(""));
+            parkMouse(m);
+            return 15;
+        });
+        STEPS.add(m -> save(m, p + name));
+        STEPS.add(m -> {
+            hold(m);
+            return 10;
+        });
+    }
+
+    private static boolean pressButton(Minecraft mc, String label) {
+        Screen s = mc.screen;
+        if (s == null) return false;
+        for (var child : s.children()) {
+            if (child instanceof Button b && b.getMessage().getString().equals(label)) {
+                b.onPress();
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Plugin: the chat summary (hover on [details]) and the book from [Open recap]. */
@@ -432,7 +504,8 @@ final class Shots {
         int tableX = (int) field(s, "tableX"), tableW = (int) field(s, "tableW");
         int scroll = (int) field(s, "scroll"), visible = (int) field(s, "visibleRows");
         int row = Math.min(hits.size(), scroll + visible) - 1 - scroll;
-        int y = 50 + 12 + 2 + 12 * row + 4;
+        int top = (int) field(s, "top");
+        int y = top + 12 + 2 + 12 * row + 4;
         mouse(mc, tableX + tableW / 3.0, y);
     }
 
@@ -447,7 +520,9 @@ final class Shots {
                 if (st == null) continue;
                 if (st.getClickEvent() != null && st.getClickEvent().getAction() == ClickEvent.Action.RUN_COMMAND
                         && st.getClickEvent().getValue().contains("book") && openStyle == null) openStyle = st;
-                if (st.getHoverEvent() != null && st.getClickEvent() == null && detailsStyle == null) {
+                boolean detailsClick = st.getClickEvent() == null || (st.getClickEvent().getAction() == ClickEvent.Action.RUN_COMMAND
+                        && st.getClickEvent().getValue().equals("/deathbreakdown"));
+                if (st.getHoverEvent() != null && detailsClick && detailsStyle == null) {
                     detailsStyle = st;
                     dx = x + 4;
                     dy = y;
