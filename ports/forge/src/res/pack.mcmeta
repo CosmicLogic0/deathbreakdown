@@ -1,1 +1,1 @@
-{ "pack": { "description": "Death Breakdown resources", "pack_format": ${pack} } }
+{ "pack": { "description": "Death Breakdown resources", ${packFields} } }
