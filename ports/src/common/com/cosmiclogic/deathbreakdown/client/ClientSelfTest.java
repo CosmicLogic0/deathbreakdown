@@ -23,6 +23,7 @@ public final class ClientSelfTest {
     private static boolean started, enabled, done, reopened, hurt, finalHit, holding, helpAsked;
     private static volatile boolean helpDone, helpOk;
     private static long startAt, hurtAt, finalAt, lastLog;
+    private static int tries;
 
     /** Invisible, doesn't pause: keeps the client test from ending before this test is done. */
     private static final class Hold extends net.minecraft.client.gui.screens.Screen {
@@ -93,7 +94,18 @@ public final class ClientSelfTest {
         if (!finalHit) {
             if (now < finalAt) return;
             finalHit = true;
-            server.execute(() -> hit(server.getPlayerList().getPlayers().get(0), 1, 40)); // a deadly fall
+            server.execute(() -> {
+                ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
+                hit(sp, 1, 40); // a deadly fall
+                DeathBreakdown.LOG.info("Death Breakdown client selftest: health after the hits {}", sp.getHealth());
+            });
+            return;
+        }
+        // Fresh players can't be hurt for their first seconds (spawn protection): try again a few times.
+        if (!sawDeathPacket && mc.player.getHealth() > 0 && now - finalAt > 3000 && ++tries <= 6) {
+            hurt = false;
+            finalHit = false;
+            hurtAt = now;
             return;
         }
         if (sawRecapScreen && !reopened) {

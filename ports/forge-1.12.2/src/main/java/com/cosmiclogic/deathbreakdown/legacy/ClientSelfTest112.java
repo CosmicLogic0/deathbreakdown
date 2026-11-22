@@ -17,6 +17,7 @@ public final class ClientSelfTest112 {
 
     static volatile boolean sawDeathPacket, sawSummary, sawDeathButton, sawRecapScreen, sawReopen;
     private static boolean started, done, reopened, hurt, holding;
+    private static int tries;
     private static long startAt, hurtAt, lastLog;
 
     /** Invisible, doesn't pause: keeps the client test from ending before this test is done. */
@@ -78,8 +79,16 @@ public final class ClientSelfTest112 {
                         sp.hurtResistantTime = 0;
                         sp.attackEntityFrom(i % 2 == 0 ? DamageSource.LAVA : DamageSource.FALL, 8);
                     }
+                    DeathBreakdown112.LOG.info("Death Breakdown client selftest: health after the hits {}", sp.getHealth());
                 }
             });
+            hurtAt = now;
+            return;
+        }
+        // Fresh players can't be hurt for their first seconds (spawn protection): try again a few times.
+        if (!sawDeathPacket && mc.player.getHealth() > 0 && now - hurtAt > 3000 && ++tries <= 6) {
+            hurt = false;
+            hurtAt = now;
             return;
         }
         if (sawRecapScreen && !reopened) {
