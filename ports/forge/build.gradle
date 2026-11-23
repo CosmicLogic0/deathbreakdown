@@ -50,9 +50,10 @@ def neoNewToml = neo && vrCmp(mcv, '1.20.5') >= 0
 def packFormats = ['1.16.5': 6, '1.17.1': 7, '1.18.2': 8, '1.19.2': 9, '1.19.4': 13, '1.20.1': 15, '1.20.4': 22, '1.20.6': 32,
                    '1.21.1': 34, '1.21.4': 46, '1.21.5': 55, '1.21.8': 64, '1.21.10': 69, '1.21.11': 75]
 def pack = packFormats[mcv] ?: 15
-// 1.21.9+ (format > 64) rejects every pack.mcmeta shape we tried (min/max vs supported_formats rules disagree
-// between versions). Forge and NeoForge make the metadata themselves when the file is missing, so leave it out there.
-def packFields = "\"pack_format\": ${pack}"
+// 1.21.9+ (format > 64): a mod jar is read as a resource pack AND a data pack. Formats below 82 then need
+// supported_formats as a data pack but may not have it as a resource pack, so min_format must be 82 or more.
+// Forge needs the file (without it the mod's resources don't load); NeoForge makes its own, so it gets none.
+def packFields = pack > 64 ? "\"min_format\": 82, \"max_format\": 255" : "\"pack_format\": ${pack}"
 processResources {
     def props = ['version': project.mod_version, 'mcRange': mcRange, 'loaderMajor': loaderMajor, 'pack': pack, 'packFields': packFields,
                  'loaderId': loaderName, 'mandatory': neoNewToml ? 'type = "required"' : 'mandatory = true']
@@ -60,7 +61,7 @@ processResources {
     inputs.property 'neoNewToml', neoNewToml
     filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) { expand props }
     if (neoNewToml) rename 'mods.toml', 'neoforge.mods.toml'
-    if (pack > 64) exclude 'pack.mcmeta'
+    if (pack > 64 && neo) exclude 'pack.mcmeta'
 }
 tasks.withType(JavaCompile).configureEach {
     options.release = javaVer; options.encoding = 'UTF-8'

@@ -164,7 +164,7 @@ jobs:
           grep -h "client selftest" run/logs/latest.log || true
           grep -q "Death Breakdown client selftest PASS" run/logs/latest.log
           # Our resources must load cleanly (lang, logo): no pack metadata errors.
-          if grep -E "pack metadata" run/logs/latest.log; then echo "FAIL: pack metadata warning/error"; exit 1; fi
+          if grep -E "pack metadata|Missing metadata in pack mod:deathbreakdown|resource pack for mod file deathbreakdown" run/logs/latest.log; then echo "FAIL: pack metadata warning/error"; exit 1; fi
       - name: Write the result
         if: always()
         run: |
