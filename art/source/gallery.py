@@ -168,11 +168,11 @@ def make_static():
     neo = {'26.3', '26.2', '26.1', '1.21.11', '1.21.1', '1.20.1'}
     versions_card('Works where you play', 'One mod, 10 Minecraft versions, Forge and NeoForge',
                   ['Forge', 'NeoForge'], [(v, [True, True if v in neo else 'no NeoForge']) for v in VERSIONS],
-                  ['Players without the mod on a modded server still get the chat recap.'], 'mod-05-versions.png', 43)
+                  ['Players without the mod on a modded server still get the chat recap.'], 'mod-06-versions.png', 43)
     versions_card('Works where you play', 'One plugin jar for every Paper version',
                   ['Paper'], [(v, [True]) for v in VERSIONS],
                   ['Players need nothing installed: it all happens in chat and a book.',
-                   'Requires LogicLib Plugin in your plugins folder.'], 'plugin-04-versions.png', 44)
+                   'Requires LogicLib Plugin 0.2.0 or newer in your plugins folder.'], 'plugin-04-versions.png', 44)
 
 
 if __name__ == '__main__':
@@ -211,35 +211,49 @@ def three_steps(title, sub, crops, captions, out, seed):
     print('made', out)
 
 
+def grid4(title, sub, items, out, seed):
+    """Four real screenshot crops in a 2x2 grid, each with a one-line caption."""
+    im, d = base(seed, [(60, 40, 1860, 1040)])
+    heading(d, title, sub)
+    boxes = [(110, 190, 930, 520), (990, 190, 1810, 520), (110, 600, 930, 930), (990, 600, 1810, 930)]
+    for (pic, cap), box in zip(items, boxes):
+        panel(im, d, pic, box)
+        d.text(((box[0] + box[2]) // 2, box[3] + 38), cap, font=T(30), fill=TITLE, anchor='mm')
+    footer(d)
+    im.save(os.path.join(OUT, out))
+    print('made', out)
+
+
 def mod_explainers():
-    death = shot('mod-death-screen.png').crop((0, 0, 1040, 640))
+    death = shot('mod-death-screen.png')
     recap = shot('mod-recap-lava.png')
-    keys = shot('mod-key-binds.png').crop((150, 1250 - 600, 1750, 1080 - 0)) if False else shot('mod-key-binds.png').crop((160, 660, 1760, 1060))
+    keys = shot('mod-key-binds.png').crop((160, 720, 1760, 1060))
     three_steps('How it works', 'From death to the full story in one click',
                 [death, recap, keys],
-                ['You die. Click the skull "Death Breakdown" button (or let it open by itself).',
+                ['You die. Click the skull "Death Breakdown" button on the death screen.',
                  'Read every hit from your last 10 seconds, oldest at the top.',
                  'Press K, or type /deathbreakdown, to open it again any time.'],
                 'mod-02-how-it-works.png', 51)
 
-    # Read the recap: the lava recap with every column labeled
+    # Read the recap: the real lava recap with its parts labeled
     im, d = base(52, [(60, 40, 1860, 1040)])
     heading(d, 'Read the recap', 'One row per hit. Hover a row for every number.')
-    pic = shot('mod-recap-lava.png')
-    px, py, s = panel(im, d, pic, (300, 250, 1620, 900))
-    X = lambda x: px + x * s
-    Y = lambda y: py + y * s
-    hy = Y(270)
-    top = [('Seconds before death', 150, 140), ('Damage type', 540, 520), ('Armor blocked', 960, 905), ('Health left', 1665, 1640)]
-    for text, cx, tx in top:
-        l, t, r, b = tag(d, (X(tx) if tx > 300 else 250, 205), text, SUB, T(28))
-        arrow(d, ((l + r) // 2, b + 4), (X(cx), hy - 4), w=5, head=18)
-    bot = [('Who or what hit you', 330, 330, (420, 975)), ('Damage', 720, 700, (790, 975)),
-           ('Enchants blocked', 1170, 1170, (1180, 975)), ('Final blow (skull)', 360, 360, (1640, 975))]
-    for text, cx, _, (tx, ty) in bot:
-        col = DMG if 'Final' in text else SUB
-        l, t, r, b = tag(d, (tx, ty), text, col, T(28))
-        arrow(d, ((l + r) // 2, t - 4), (X(cx), Y(842)), col=col, w=5, head=18)
+    px, py, s = panel(im, d, shot('mod-recap-lava.png'), (380, 240, 1540, 900))
+    X = lambda x: int(px + x * s)
+    Y = lambda y: int(py + y * s)
+    for text, tx, cx in [('Seconds before death', 470, 318), ('Damage type', 800, 630), ('Armor blocked', 1110, 960), ('Health left', 1440, 1520)]:
+        col = ARMOR if 'Armor' in text else HEALTH if 'Health' in text else SUB
+        l, t, r, b = tag(d, (tx, 200), text, col, T(26))
+        arrow(d, ((l + r) // 2, b + 4), (X(cx), Y(296) - 10), col=col, w=5, head=18)
+    ring(d, (X(232), Y(664), X(1684), Y(711)), DMG, w=5)
+    for text, ty, target, col in [('Your last 5 deaths: < >', 290, (X(63) - 30, Y(55)), SUB),
+                                  ('Tip line', 400, (X(670), Y(224)), SUB),
+                                  ('Final blow', 660, (X(232) - 8, Y(687)), DMG),
+                                  ('Copy as text', 860, (X(500) - 8, Y(1015)), SUB)]:
+        l, t, r, b = tag(d, (195, ty), text, col, T(26))
+        arrow(d, (r + 4, (t + b) // 2), target, col=col, w=5, head=18)
+    l, t, r, b = tag(d, (1180, 975), 'Settings: every option', SUB, T(26))
+    arrow(d, ((l + r) // 2 - 120, t - 4), (X(960), Y(1050)), w=5, head=18)
     footer(d)
     im.save(os.path.join(OUT, 'mod-03-read-the-recap.png'))
     print('made mod-03-read-the-recap.png')
@@ -247,12 +261,14 @@ def mod_explainers():
     # What your gear blocked: three real recaps, three kinds of protection
     im, d = base(53, [(60, 40, 1860, 1040)])
     heading(d, 'See what your gear blocked', 'Armor and each Protection enchantment, in hearts')
-    items = [('mod-recap-creeper.png', 'Creeper', 'Blast Protection IV', 'enchants stopped 3.71♥', ENCH),
-             ('mod-recap-lava.png', 'Lava', 'Fire Protection IV', 'enchants stopped 4.3♥', ENCH),
-             ('mod-recap-hover.png', 'Skeleton arrows', 'Iron armor', 'armor stopped 2.66♥', ARMOR)]
+    crops = {'mod-recap-creeper.png': (300, 0, 1620, 640), 'mod-recap-lava.png': (232, 160, 1690, 840),
+             'mod-recap-hover.png': (232, 0, 1690, 640)}
+    items = [('mod-recap-creeper.png', 'Creeper', 'Blast Protection IV', 'enchants stopped 3.71\u2665', ENCH),
+             ('mod-recap-lava.png', 'Lava', 'Fire Protection IV', 'enchants stopped 4.3\u2665', ENCH),
+             ('mod-recap-hover.png', 'Skeleton arrows', 'Iron armor', 'armor stopped 1.85\u2665', ARMOR)]
     for i, (f, what, gear, num, col) in enumerate(items):
         x0 = 70 + i * 620
-        panel(im, d, shot(f), (x0, 230, x0 + 540, 560))
+        panel(im, d, shot(f).crop(crops[f]), (x0, 230, x0 + 540, 560))
         d.text((x0 + 270, 640), what, font=T(34), fill=TITLE, anchor='mm')
         tag(d, (x0 + 270, 720), gear, col, T(32))
         d.text((x0 + 270, 800), num, font=T(32), fill=col, anchor='mm')
@@ -260,6 +276,13 @@ def mod_explainers():
     footer(d)
     im.save(os.path.join(OUT, 'mod-04-gear-blocked.png'))
     print('made mod-04-gear-blocked.png')
+
+    grid4('New in 1.1.0', 'Your recent deaths, a settings screen, history and help',
+          [(shot('mod-recap-creeper.png').crop((0, 0, 1920, 640)), 'Your last 5 deaths: flip with < and >, plus a tip'),
+           (shot('mod-settings.png'), 'Settings screen: every option explained'),
+           (shot('mod-history.png'), '/db history: click a death to open it'),
+           (shot('mod-help.png'), '/db help: every command, explained')],
+          'mod-05-new-in-1-1.png', 54)
 
 
 def plugin_explainers():
