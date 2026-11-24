@@ -204,10 +204,13 @@ final class Shots {
         });
         cmds(List.of("data merge entity @e[type=zombie,limit=1,sort=nearest] {NoAI:0b}",
                 "data merge entity @e[type=skeleton,limit=1,sort=nearest] {NoAI:0b}"), 1);
-        // If the fight drags on (easy difficulty, missed arrows), walk the zombie back to the player every 5 s.
+        // If the zombie hasn't reached the player after 10 s (its pathing on a fresh flat world is unreliable), it
+        // lands its swings with /damage ... by the zombie: the game's own damage pipeline (armor, enchantments)
+        // with the zombie as the attacker, every 1.5 s, until the player dies.
         STEPS.add(m -> {
             if (m.screen instanceof DeathScreen) return 1;
-            if (++fightTicks % 100 == 0) cmd(m, "execute at @s run tp @e[type=zombie,limit=1,sort=nearest] ^ ^ ^1.5 facing entity @s");
+            if (++fightTicks > 200 && fightTicks % 30 == 0)
+                cmd(m, "damage @s 5 minecraft:mob_attack by @e[type=zombie,limit=1,sort=nearest]");
             return REPEAT;
         });
         if (plugin()) {
