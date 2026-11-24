@@ -1,0 +1,36 @@
+{
+  "_about": "CurseForge gallery for 1.1.0, in upload order. Graphics are made by art/source/gallery.py; shots/ are real CI screenshots (Gallery screenshots workflow) picked by art/source/pick_shots.py.",
+  "mod": [
+    ["mod-01-title.png", "Death Breakdown", "See exactly what killed you: every hit from your last 10 seconds, and what your armor blocked."],
+    ["mod-02-how-it-works.png", "How it works", "Die, click the skull button on the death screen, and read every hit. Press K to see it again."],
+    ["mod-03-read-the-recap.png", "Read the recap", "One row per hit: time, who hit you, damage type, damage, what armor and enchantments blocked, and health left."],
+    ["mod-04-gear-blocked.png", "See what your gear blocked", "Armor and each Protection enchantment are counted separately, hit by hit, from the game's own math."],
+    ["mod-05-new-in-1-1.png", "New in 1.1.0", "Your last 5 deaths, a settings screen, /db history and /db help."],
+    ["mod-06-versions.png", "Works where you play", "Forge 1.12.2 to 26.3 and NeoForge 1.20.1 to 26.3. Players without the mod still get the chat recap."],
+    ["shots/mod-fight.png", "The fight", "A zombie with an iron sword and a skeleton attack on a Superflat world."],
+    ["shots/mod-recap-mobs.png", "Recap: zombie and skeleton", "A short fall, an arrow and five sword hits, with what iron armor and Protection III blocked."],
+    ["shots/mod-recap-lava.png", "Recap: fell into lava", "Every lava tick, with what Fire Protection IV stopped."],
+    ["shots/mod-recap-creeper.png", "Recap: creeper", "A fall, then the final blow from a creeper. Press < to flip back to earlier deaths."],
+    ["shots/mod-recap-hover.png", "Hover for details", "Point at a row to see every number for that hit."],
+    ["shots/mod-chat-line.png", "One line in chat", "After each death you also get a short summary in chat."],
+    ["shots/mod-settings.png", "Settings", "Every option on one screen, each with a tooltip. Open it from the recap or the Mods list."],
+    ["shots/mod-history.png", "/db history", "Your last 5 deaths, kept after you leave. Click one to open it."],
+    ["shots/mod-key-binds.png", "Your key, your choice", "The reopen key is K by default. Change it in Controls under Death Breakdown."]
+  ],
+  "plugin": [
+    ["plugin-01-title.png", "Death Breakdown Plugin", "The death recap for Paper servers: a chat summary, hover details and a book. No client mod needed."],
+    ["plugin-02-how-it-works.png", "How it works on your server", "A one-line summary after each death, every hit on hover, and the full recap as a book."],
+    ["plugin-03-recap-book.png", "The recap book", "A clean summary first, then one page per hit with every number."],
+    ["plugin-04-new-in-1-1.png", "New in 1.1.0", "Death history, a tip line, [copy] and /db help."],
+    ["plugin-05-versions.png", "Works where you play", "One plugin jar for Paper 1.12.2 to 26.3. Requires LogicLib Plugin 0.2.0 or newer."],
+    ["shots/plugin-fight.png", "The fight", "A zombie with an iron sword and a skeleton attack on a Superflat Paper server."],
+    ["shots/plugin-death-chat.png", "Right after you die", "One line in chat: what killed you, the damage, and what your gear stopped."],
+    ["shots/plugin-chat-hover.png", "Hover [details]", "The newest hits right in the chat hover, with a tip at the top."],
+    ["shots/plugin-book-mobs.png", "The recap book (page 1)", "Click [Open recap] or type /db for the book."],
+    ["shots/plugin-book-mobs-page2.png", "One page per hit", "Damage, armor, enchantments and health left for each hit."],
+    ["shots/plugin-book-lava.png", "Recap: lava", "A fall into lava, with what Fire Protection IV stopped."],
+    ["shots/plugin-book-creeper.png", "Recap: creeper", "A fall, then a creeper, with Blast Protection IV."],
+    ["shots/plugin-history.png", "/db history", "Each player's last 5 deaths, kept across restarts. Click one to open it."],
+    ["shots/plugin-help.png", "/db help", "Every command, explained in game."]
+  ]
+}
