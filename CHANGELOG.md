@@ -12,7 +12,7 @@
 - The chat hover shows the newest 6 hits (older ones are summed up), so it always fits on the screen.
 - Pressing K after leaving and rejoining a server brings back your saved recap.
 - `/db reload` and the log say exactly what was wrong in the config file, and bad values fall back to the defaults. Your 1.0.0 settings are kept.
-- The recap screen fits at big GUI scales and in small windows: the legend wraps and long names are shortened.
+- The recap screen fits at big GUI scales and in small windows: the legend wraps between its entries and long names are shortened.
 
 ### Fixed
 - The one-line chat summary after a death never appeared when you had the mod installed.

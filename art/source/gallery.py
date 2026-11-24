@@ -172,7 +172,7 @@ def make_static():
     versions_card('Works where you play', 'One plugin jar for every Paper version',
                   ['Paper'], [(v, [True]) for v in VERSIONS],
                   ['Players need nothing installed: it all happens in chat and a book.',
-                   'Requires LogicLib Plugin 0.2.0 or newer in your plugins folder.'], 'plugin-04-versions.png', 44)
+                   'Requires LogicLib Plugin 0.2.0 or newer in your plugins folder.'], 'plugin-05-versions.png', 44)
 
 
 if __name__ == '__main__':
@@ -211,7 +211,7 @@ def three_steps(title, sub, crops, captions, out, seed):
     print('made', out)
 
 
-def grid4(title, sub, items, out, seed):
+def grid4(title, sub, items, out, seed, foot='Death Breakdown · by CosmicLogic'):
     """Four real screenshot crops in a 2x2 grid, each with a one-line caption."""
     im, d = base(seed, [(60, 40, 1860, 1040)])
     heading(d, title, sub)
@@ -219,7 +219,7 @@ def grid4(title, sub, items, out, seed):
     for (pic, cap), box in zip(items, boxes):
         panel(im, d, pic, box)
         d.text(((box[0] + box[2]) // 2, box[3] + 38), cap, font=T(30), fill=TITLE, anchor='mm')
-    footer(d)
+    footer(d, foot)
     im.save(os.path.join(OUT, out))
     print('made', out)
 
@@ -261,11 +261,11 @@ def mod_explainers():
     # What your gear blocked: three real recaps, three kinds of protection
     im, d = base(53, [(60, 40, 1860, 1040)])
     heading(d, 'See what your gear blocked', 'Armor and each Protection enchantment, in hearts')
-    crops = {'mod-recap-creeper.png': (300, 0, 1620, 640), 'mod-recap-lava.png': (232, 160, 1690, 840),
-             'mod-recap-hover.png': (232, 0, 1690, 640)}
+    crops = {'mod-recap-creeper.png': (232, 0, 1690, 640), 'mod-recap-lava.png': (232, 160, 1690, 840),
+             'mod-recap-hover.png': (232, 0, 1690, 820)}
     items = [('mod-recap-creeper.png', 'Creeper', 'Blast Protection IV', 'enchants stopped 3.71\u2665', ENCH),
-             ('mod-recap-lava.png', 'Lava', 'Fire Protection IV', 'enchants stopped 4.3\u2665', ENCH),
-             ('mod-recap-hover.png', 'Skeleton arrows', 'Iron armor', 'armor stopped 1.85\u2665', ARMOR)]
+             ('mod-recap-lava.png', 'Lava', 'Fire Protection IV', 'enchants stopped 4.84\u2665', ENCH),
+             ('mod-recap-hover.png', 'Zombie with an iron sword', 'Iron armor', 'armor stopped 9.84\u2665', ARMOR)]
     for i, (f, what, gear, num, col) in enumerate(items):
         x0 = 70 + i * 620
         panel(im, d, shot(f).crop(crops[f]), (x0, 230, x0 + 540, 560))
@@ -288,11 +288,11 @@ def mod_explainers():
 def plugin_explainers():
     im, d = base(61, [(60, 40, 1860, 1040)])
     heading(d, 'How it works on your server', 'Players see it in chat, no mod needed')
-    chat = shot('plugin-death-chat.png').crop((0, 875, 990, 1010))
+    chat = shot('plugin-death-chat.png').crop((0, 840, 1000, 970))
     px, py, sc = panel(im, d, chat, (170, 190, 1750, 380))
     stext(d, (110, (py + py + chat.height * sc) / 2), '1', F(40), SUB, 'mm', sh=3)
     d.text((W // 2, py + chat.height * sc + 46), 'After each death: a one-line summary in chat', font=T(32), fill=TITLE, anchor='mm')
-    hover = shot('plugin-chat-hover.png').crop((380, 40, 1240, 1080))
+    hover = shot('plugin-chat-hover.png').crop((380, 420, 1050, 1080))
     book = shot('plugin-book-mobs.png').crop((560, 0, 1360, 760))
     a1 = panel(im, d, hover, (250, 500, 860, 945))
     a2 = panel(im, d, book, (1060, 500, 1670, 945))
@@ -311,17 +311,24 @@ def plugin_explainers():
     a = panel(im, d, p1, (420, 200, 960, 960))
     b = panel(im, d, p2, (1000, 200, 1540, 960))
     px, py, s = a
-    for text, y, ty, col in [('What killed you', 330, 420, SUB), ('Total damage', 482, 600, DMG), ('Armor + enchants', 520, 760, ARMOR)]:
+    for text, y, ty, col in [('What killed you', 285, 330, SUB), ('Total damage', 357, 490, DMG), ('Armor + enchants', 411, 650, ARMOR), ('A tip (new)', 501, 810, SUB)]:
         l, t, r, bb = tag(d, (230, ty), text, col, T(28), anchor='mm')
-        arrow(d, (r + 4, ty), (px + 90 * s, py + y * s), col=col, w=5, head=16)
+        arrow(d, (r + 4, ty), (px + 110 * s, py + y * s), col=col, w=5, head=16)
     px, py, s = b
-    for text, y, ty, col in [('One page per hit', 141, 380, SUB), ('Every number', 480, 620, ARMOR)]:
+    for text, y, ty, col in [('One page per hit', 141, 380, SUB), ('Every number', 430, 620, ARMOR)]:
         l, t, r, bb = tag(d, (1720, ty), text, col, T(28), anchor='mm')
         arrow(d, (l - 4, ty), (px + 600 * s, py + y * s), col=col, w=5, head=16)
     d.text((1720, 690), 'for that hit', font=T(28), fill=ARMOR, anchor='mm')
     footer(d, 'Death Breakdown Plugin · by CosmicLogic')
     im.save(os.path.join(OUT, 'plugin-03-recap-book.png'))
     print('made plugin-03-recap-book.png')
+
+    grid4('New in 1.1.0', 'History, a tip line, copy, and help', [
+        (shot('plugin-history.png'), '/db history: your last 5 deaths, click to open'),
+        (shot('plugin-book-mobs.png').crop((600, 240, 1320, 600)), 'A tip in the hover and the book'),
+        (shot('plugin-death-chat.png').crop((0, 840, 1000, 970)), '[copy] puts it on your clipboard (1.15+)'),
+        (shot('plugin-help.png'), '/db help: every command, explained')],
+        'plugin-04-new-in-1-1.png', 63, 'Death Breakdown Plugin · by CosmicLogic')
 
 
 if __name__ == '__main__':
