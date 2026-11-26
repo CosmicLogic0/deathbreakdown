@@ -25,20 +25,33 @@ public final class ClientRecap {
     private ClientRecap() {}
 
     //#if MC >= 1.21.11
-    //#if MC >= 26.1
-    public static final KeyMapping OPEN_KEY = new KeyMapping("key.deathbreakdown.open", InputConstants.Type.values()[0],
-            InputConstants.KEY_K, KeyMapping.Category.register(net.minecraft.resources.Identifier.fromNamespaceAndPath(DeathBreakdown.MOD_ID, "main")));
-    //#else
-    public static final KeyMapping OPEN_KEY = new KeyMapping("key.deathbreakdown.open", InputConstants.Type.values()[0],
-            GLFW.GLFW_KEY_K, KeyMapping.Category.register(net.minecraft.resources.Identifier.fromNamespaceAndPath(DeathBreakdown.MOD_ID, "main")));
-    //#endif
+    private static final KeyMapping.Category CATEGORY =
+            KeyMapping.Category.register(net.minecraft.resources.Identifier.fromNamespaceAndPath(DeathBreakdown.MOD_ID, "main"));
     //#elif MC >= 1.21.9
-    public static final KeyMapping OPEN_KEY = new KeyMapping("key.deathbreakdown.open", InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_K, KeyMapping.Category.register(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(DeathBreakdown.MOD_ID, "main")));
-    //#else
-    public static final KeyMapping OPEN_KEY = new KeyMapping("key.deathbreakdown.open", InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_K, "key.categories.deathbreakdown");
+    private static final KeyMapping.Category CATEGORY =
+            KeyMapping.Category.register(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(DeathBreakdown.MOD_ID, "main"));
     //#endif
+
+    /** A key in Controls → Death Breakdown. {@code code} -1 = not bound until the player picks one. */
+    private static KeyMapping key(String name, int code) {
+        //#if MC >= 1.21.9
+        return new KeyMapping("key.deathbreakdown." + name, InputConstants.Type.values()[0], code, CATEGORY);
+        //#else
+        return new KeyMapping("key.deathbreakdown." + name, InputConstants.Type.KEYSYM, code, "key.categories.deathbreakdown");
+        //#endif
+    }
+
+    //#if MC >= 26.1
+    public static final KeyMapping OPEN_KEY = key("open", InputConstants.KEY_K);
+    //#else
+    public static final KeyMapping OPEN_KEY = key("open", GLFW.GLFW_KEY_K);
+    //#endif
+    /** Turns the death HUD on or off (not bound by default). */
+    public static final KeyMapping HUD_KEY = key("hud", -1);
+    /** Turns the death marker on or off (not bound by default). */
+    public static final KeyMapping MARKER_KEY = key("marker", -1);
+    /** Every key, for the loader to register in Controls. */
+    public static final KeyMapping[] KEYS = {OPEN_KEY, HUD_KEY, MARKER_KEY};
 
     /** Recaps this client received, oldest first (newest = the last death), capped at historySize. */
     private static final List<Recap> HISTORY = new ArrayList<>();
@@ -124,6 +137,7 @@ public final class ClientRecap {
         Minecraft mc = Minecraft.getInstance();
         if (death) {
             ClientSelfTest.sawDeathPacket = true;
+            ClientMarker.onDeath(mc, r);
             if (DeathBreakdown.config.chatSummary && mc.player != null) {
                 ClientSelfTest.sawSummary = true;
                 say(mc, Txt.lit("[" + DeathBreakdown.NAME + "] ").withStyle(ChatFormatting.GOLD)
@@ -143,8 +157,16 @@ public final class ClientRecap {
     public static void onScreenInit(Screen screen, Consumer<Button> addButton) {
         ClientSelfTest.maybeStart();
         if (!(screen instanceof DeathScreen)) return;
-        ClientSelfTest.sawDeathButton = true;
-        addButton.accept(button("☠ " + DeathBreakdown.NAME, 4, 4, 110, 20, () -> open(screen)));
+        com.cosmiclogic.deathbreakdown.core.RecapConfig c = DeathBreakdown.config;
+        if (c.deathButton) {
+            ClientSelfTest.sawDeathButton = true;
+            int w = 110, h = 20;
+            int x = c.deathButtonCorner.endsWith("right") ? screen.width - w - c.deathButtonX : c.deathButtonX;
+            int y = c.deathButtonCorner.startsWith("bottom") ? screen.height - h - c.deathButtonY : c.deathButtonY;
+            x = Math.max(0, Math.min(screen.width - w, x));
+            y = Math.max(0, Math.min(screen.height - h, y));
+            addButton.accept(button("☠ " + DeathBreakdown.NAME, x, y, w, h, () -> open(screen)));
+        }
         if (DeathBreakdown.config.openOnDeath) autoOpen(screen);
     }
 
@@ -171,6 +193,43 @@ public final class ClientRecap {
         while (OPEN_KEY.consumeClick()) {
             if (screen(mc) == null) open(null);
         }
+        while (HUD_KEY.consumeClick()) {
+            toggle("hudEnabled", DeathBreakdown.config.hudEnabled ? "false" : "true",
+                    DeathBreakdown.config.hudEnabled ? "Death HUD off" : "Death HUD on");
+        }
+        while (MARKER_KEY.consumeClick()) {
+            boolean on = !DeathBreakdown.config.markerStyle.equals("off");
+            toggle("markerStyle", on ? "off" : "particles", on ? "Death marker off" : "Death marker on");
+        }
+    }
+
+    /** A key flips a setting: change it, save the file, say so above the hotbar. */
+    private static void toggle(String key, String value, String message) {
+        com.cosmiclogic.deathbreakdown.core.RecapConfig c = DeathBreakdown.config.copy();
+        com.cosmiclogic.deathbreakdown.core.Option.get(key).set(c, value);
+        DeathBreakdown.applyConfig(c);
+        say(Minecraft.getInstance(), Txt.lit(message).withStyle(ChatFormatting.GRAY), true);
+    }
+
+    /** The sound when the recap opens (off by default). */
+    static void playOpenSound() {
+        com.cosmiclogic.deathbreakdown.core.RecapConfig c = DeathBreakdown.config;
+        if (!c.soundOnOpen || c.soundVolume <= 0) return;
+        float vol = Math.min(1F, c.soundVolume / 100F);
+        net.minecraft.sounds.SoundEvent ev;
+        if (c.soundKind.equals("bell")) {
+            //#if MC >= 1.19.3
+            ev = net.minecraft.sounds.SoundEvents.NOTE_BLOCK_BELL.value();
+            //#else
+            ev = net.minecraft.sounds.SoundEvents.NOTE_BLOCK_BELL;
+            //#endif
+        } else if (c.soundKind.equals("xp")) {
+            ev = net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP;
+        } else {
+            ev = net.minecraft.sounds.SoundEvents.BOOK_PAGE_TURN;
+        }
+        Minecraft.getInstance().getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(ev, 1.0F, vol));
+        ClientSelfTest.soundsPlayed++;
     }
 
     public static void open(Screen parent) {
@@ -184,12 +243,14 @@ public final class ClientRecap {
             say(mc, Txt.lit("No death recap yet. It shows up here after you die.").withStyle(ChatFormatting.GRAY), true);
             return;
         }
+        playOpenSound();
         setScreen(mc, new RecapScreen(parent, history(), index));
     }
 
     /** Leaving a world or server: its recaps belong to it. */
     public static void clear() {
         HISTORY.clear();
+        ClientMarker.clear();
         autoOpened = Long.MIN_VALUE;
     }
 }

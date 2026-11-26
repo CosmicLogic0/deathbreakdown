@@ -50,6 +50,17 @@ public final class Txt {
         return lit(text).withStyle(style);
     }
 
+    /**
+     * Text in a palette color. If the player kept that color at its 1.1.0 default, the old chat color is used, so
+     * the default look doesn't change at all; any other color is drawn exactly (hex colors work in chat on 1.16+).
+     */
+    public static MutableComponent col(String s, com.cosmiclogic.deathbreakdown.core.Palette p,
+                                       com.cosmiclogic.deathbreakdown.core.Palette.Slot slot, net.minecraft.ChatFormatting whenDefault) {
+        int rgb = p.get(slot);
+        if (rgb == slot.def) return lit(s).withStyle(whenDefault);
+        return lit(s).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(rgb)));
+    }
+
     public static void send(ServerPlayer p, Component c) {
         //#if MC >= 1.19
         p.sendSystemMessage(c);

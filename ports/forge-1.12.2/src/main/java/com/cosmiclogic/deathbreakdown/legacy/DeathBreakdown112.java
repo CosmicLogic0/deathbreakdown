@@ -26,7 +26,7 @@ import java.io.File;
  * Death Breakdown for Forge 1.12.2. Players without the mod can join (acceptableRemoteVersions = "*"):
  * they get the chat recap; players with it get the recap screen.
  */
-@Mod(modid = DeathBreakdown112.MOD_ID, name = DeathBreakdown112.NAME, version = "1.1.0",
+@Mod(modid = DeathBreakdown112.MOD_ID, name = DeathBreakdown112.NAME, version = "1.2.0",
         acceptableRemoteVersions = "*", acceptedMinecraftVersions = "[1.12.2]",
         guiFactory = "com.cosmiclogic.deathbreakdown.legacy.GuiFactory112")
 public class DeathBreakdown112 {

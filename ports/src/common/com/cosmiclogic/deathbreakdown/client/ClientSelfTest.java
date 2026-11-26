@@ -19,7 +19,12 @@ import java.io.File;
 public final class ClientSelfTest {
     private ClientSelfTest() {}
 
-    static volatile boolean sawDeathPacket, sawSummary, sawDeathButton, sawRecapScreen, sawReopen;
+    static volatile boolean sawDeathPacket, sawSummary, sawDeathButton, sawRecapScreen, sawReopen, sawConfigScreen;
+    static volatile int soundsPlayed;
+    private static int phase, pageAt, waitTicks, hudBefore, partBefore;
+    private static ConfigScreen cs;
+    private static final java.util.List<String> settingsFail = new java.util.ArrayList<>();
+    private static String savedText;
     private static boolean started, enabled, done, reopened, hurt, finalHit, holding, helpAsked;
     private static volatile boolean helpDone, helpOk;
     private static long startAt, hurtAt, finalAt, lastLog;
@@ -131,12 +136,129 @@ public final class ClientSelfTest {
             });
             return;
         }
+        if (reopened && helpDone && phase < 99) {
+            settingsStep(mc);
+            return;
+        }
         if (reopened && helpDone) {
             String missing = (sawDeathPacket ? "" : " death-packet") + (sawSummary ? "" : " chat-summary")
                     + (sawDeathButton ? "" : " death-screen-button") + (sawRecapScreen ? "" : " auto-open")
-                    + (sawReopen ? "" : " reopen") + (helpOk ? "" : " help-reply");
-            finish(missing.isEmpty() ? "PASS: death packet flagged, chat summary, death screen button, recap opened by itself, reopened, help reply ("
-                    + ClientRecap.history().size() + " in history)" : "FAIL: missing" + missing);
+                    + (sawReopen ? "" : " reopen") + (helpOk ? "" : " help-reply")
+                    + (settingsFail.isEmpty() ? "" : " settings" + settingsFail);
+            finish(missing.isEmpty() ? "PASS: death packet flagged, chat summary, death screen button, recap opened by itself, reopened, help reply, "
+                    + "settings screen (every page and setting, reset, cancel, save), sound, death marker, HUD ("
+                    + ClientRecap.history().size() + " in history, " + ClientMarker.particlesSpawned + " particles, "
+                    + ClientMarker.hudFrames + " HUD frames)" : "FAIL: missing" + missing);
+        }
+    }
+
+    /**
+     * The 1.2.0 settings, one step per tick so every page gets drawn: each setting changes when clicked, Reset to
+     * defaults puts everything back, Cancel keeps the old settings, Save applies and writes them; then the sound,
+     * the death marker (particles and beam) and the HUD.
+     */
+    private static void settingsStep(Minecraft mc) {
+        com.cosmiclogic.deathbreakdown.core.RecapConfig live = DeathBreakdown.config;
+        switch (phase) {
+            case 0: {
+                savedText = live.text();
+                cs = new ConfigScreen(new Hold());
+                ClientRecap.setScreen(mc, cs);
+                pageAt = 0;
+                phase = 1;
+                return;
+            }
+            case 1: { // one page per tick: click every setting on it (the preview draws in between)
+                if (pageAt >= com.cosmiclogic.deathbreakdown.core.Option.PAGES.length) { phase = 2; return; }
+                String page = com.cosmiclogic.deathbreakdown.core.Option.PAGES[pageAt++];
+                cs.showPage(page);
+                for (com.cosmiclogic.deathbreakdown.core.Option o : com.cosmiclogic.deathbreakdown.core.Option.page(page)) {
+                    String before = o.get(cs.c);
+                    if (o.kind == com.cosmiclogic.deathbreakdown.core.Option.Kind.COLOR) {
+                        cs.change(o, "#12AB34");
+                        if (cs.c.palette().get(o.slot) != 0x12AB34) settingsFail.add(o.key + "-color");
+                    } else {
+                        cs.change(o, o.next(cs.c, false));
+                        if (o.get(cs.c).equals(before)) settingsFail.add(o.key + "-click");
+                    }
+                    String bad = o.set(cs.c, o.badValue());
+                    if (bad == null || !o.get(cs.c).equalsIgnoreCase(o.getDefault())) settingsFail.add(o.key + "-bad");
+                }
+                return;
+            }
+            case 2: {
+                cs.resetAll();
+                for (com.cosmiclogic.deathbreakdown.core.Option o : com.cosmiclogic.deathbreakdown.core.Option.ALL) {
+                    if (!o.get(cs.c).equalsIgnoreCase(o.getDefault())) settingsFail.add(o.key + "-reset");
+                }
+                cs.change(com.cosmiclogic.deathbreakdown.core.Option.get("hudEnabled"), "true");
+                cs.onClose(); // Cancel
+                if (!DeathBreakdown.config.text().equals(savedText)) settingsFail.add("cancel-kept-changes");
+                phase = 3;
+                return;
+            }
+            case 3: {
+                cs = new ConfigScreen(new Hold());
+                ClientRecap.setScreen(mc, cs);
+                cs.change(com.cosmiclogic.deathbreakdown.core.Option.get("markerStyle"), "particles");
+                cs.change(com.cosmiclogic.deathbreakdown.core.Option.get("markerUntilReached"), "false");
+                cs.change(com.cosmiclogic.deathbreakdown.core.Option.get("updateTicks"), "2");
+                cs.change(com.cosmiclogic.deathbreakdown.core.Option.get("hudEnabled"), "true");
+                cs.change(com.cosmiclogic.deathbreakdown.core.Option.get("soundOnOpen"), "true");
+                cs.change(com.cosmiclogic.deathbreakdown.core.Option.get("colorDamage"), "#12AB34");
+                cs.save();
+                if (!DeathBreakdown.config.markerStyle.equals("particles") || !DeathBreakdown.config.hudEnabled
+                        || DeathBreakdown.config.palette().get(com.cosmiclogic.deathbreakdown.core.Palette.Slot.DAMAGE) != 0x12AB34) {
+                    settingsFail.add("save-not-applied");
+                }
+                try {
+                    String file = new String(java.nio.file.Files.readAllBytes(DeathBreakdown.configFile().toPath()), "UTF-8");
+                    if (!file.contains("markerStyle=particles") || !file.contains("colorDamage=#12AB34")) settingsFail.add("save-not-written");
+                } catch (java.io.IOException e) {
+                    settingsFail.add("save-read:" + e);
+                }
+                int sounds = soundsPlayed;
+                ClientRecap.open(new Hold()); // opening the recap plays the sound now
+                if (soundsPlayed <= sounds) settingsFail.add("sound");
+                if (ClientMarker.spot == null) settingsFail.add("no-death-spot");
+                partBefore = ClientMarker.particlesSpawned;
+                waitTicks = 0;
+                phase = 4;
+                return;
+            }
+            case 4: { // the marker spawns particles around the spot
+                if (ClientMarker.particlesSpawned > partBefore) {
+                    com.cosmiclogic.deathbreakdown.core.RecapConfig b = DeathBreakdown.config.copy();
+                    b.markerStyle = "beam";
+                    DeathBreakdown.config = b;
+                    partBefore = ClientMarker.particlesSpawned;
+                    waitTicks = 0;
+                    phase = 5;
+                } else if (++waitTicks > 60) {
+                    settingsFail.add("marker-particles");
+                    phase = 5;
+                }
+                return;
+            }
+            case 5: {
+                if (ClientMarker.particlesSpawned > partBefore + 20 || ++waitTicks > 60) {
+                    if (ClientMarker.particlesSpawned <= partBefore) settingsFail.add("marker-beam");
+                    hudBefore = ClientMarker.hudFrames;
+                    ClientRecap.setScreen(mc, null); // the HUD only shows in game, with no screen open
+                    waitTicks = 0;
+                    phase = 6;
+                }
+                return;
+            }
+            case 6: {
+                if (ClientMarker.hudFrames > hudBefore || ++waitTicks > 8) {
+                    if (ClientMarker.hudFrames <= hudBefore) settingsFail.add("hud");
+                    ClientRecap.setScreen(mc, new Hold());
+                    phase = 99;
+                }
+                return;
+            }
+            default:
         }
     }
 

@@ -73,28 +73,34 @@ public final class RecapText {
         }
     }
 
-    public static int color(Col c, Hit h) {
+    public static int color(Col c, Hit h) { return color(c, h, Palette.DEFAULT); }
+
+    /** The color of a cell, from the player's palette. */
+    public static int color(Col c, Hit h, Palette p) {
         switch (c) {
-            case SOURCE: return h.finalBlow ? GOLD : WHITE;
-            case TYPE: return kindColor(h.kind);
-            case DAMAGE: return RED;
-            case ARMOR: return GRAY;
-            case ENCHANTS: return PURPLE;
-            case OTHER: return BLUE;
-            case HEALTH: return h.healthAfter <= 0.01F ? DARK_RED : GREEN;
-            default: return GRAY;
+            case TIME: return p.get(Palette.Slot.TIME);
+            case SOURCE: return h.finalBlow ? p.get(Palette.Slot.FINAL_BLOW) : p.get(Palette.Slot.SOURCE);
+            case TYPE: return kindColor(h.kind, p);
+            case DAMAGE: return p.get(Palette.Slot.DAMAGE);
+            case ARMOR: return p.get(Palette.Slot.ARMOR);
+            case ENCHANTS: return p.get(Palette.Slot.ENCHANTS);
+            case OTHER: return p.get(Palette.Slot.OTHER);
+            case HEALTH: return h.healthAfter <= 0.01F ? p.get(Palette.Slot.HEALTH_ZERO) : p.get(Palette.Slot.HEALTH);
+            default: return p.get(Palette.Slot.MUTED);
         }
     }
 
-    public static int kindColor(Hit.Kind k) {
+    public static int kindColor(Hit.Kind k) { return kindColor(k, Palette.DEFAULT); }
+
+    public static int kindColor(Hit.Kind k, Palette p) {
         switch (k) {
-            case PLAYER: return 0x55FFFF;
-            case MOB: return 0xFF7777;
-            case PROJECTILE: return 0xFFDD55;
-            case EXPLOSION: return 0xFF9944;
-            case ENVIRONMENT: return 0x88CC66;
-            case MAGIC: return PURPLE;
-            default: return GRAY;
+            case PLAYER: return p.get(Palette.Slot.KIND_PLAYER);
+            case MOB: return p.get(Palette.Slot.KIND_MOB);
+            case PROJECTILE: return p.get(Palette.Slot.KIND_PROJECTILE);
+            case EXPLOSION: return p.get(Palette.Slot.KIND_EXPLOSION);
+            case ENVIRONMENT: return p.get(Palette.Slot.KIND_ENVIRONMENT);
+            case MAGIC: return p.get(Palette.Slot.KIND_MAGIC);
+            default: return p.get(Palette.Slot.KIND_OTHER);
         }
     }
 

@@ -64,6 +64,33 @@ final class Draw {
         //#endif
     }
 
+    /** Moves the origin to x, y and scales by s until pop(). */
+    void push(float x, float y, float s) {
+        //#if MC >= 1.21.6
+        g.pose().pushMatrix();
+        g.pose().translate(x, y);
+        g.pose().scale(s, s);
+        //#elif MC >= 1.20
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0);
+        g.pose().scale(s, s, 1);
+        //#else
+        pose.pushPose();
+        pose.translate(x, y, 0);
+        pose.scale(s, s, 1);
+        //#endif
+    }
+
+    void pop() {
+        //#if MC >= 1.21.6
+        g.pose().popMatrix();
+        //#elif MC >= 1.20
+        g.pose().popPose();
+        //#else
+        pose.popPose();
+        //#endif
+    }
+
     /** Splits text into lines that fit {@code max} pixels (plain strings work on every version). */
     static List<String> wrap(Font font, String s, int max) {
         List<String> out = new ArrayList<>();

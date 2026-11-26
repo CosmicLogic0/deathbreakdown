@@ -15,7 +15,9 @@ final class NeoForgeClient {
         // "Config" button in the mod list opens Death Breakdown's settings.
         container.registerExtensionPoint(net.neoforged.neoforge.client.gui.IConfigScreenFactory.class,
                 (c, parent) -> new com.cosmiclogic.deathbreakdown.client.ConfigScreen(parent));
-        modBus.addListener((RegisterKeyMappingsEvent e) -> e.register(ClientRecap.OPEN_KEY));
+        modBus.addListener((RegisterKeyMappingsEvent e) -> { for (net.minecraft.client.KeyMapping k : ClientRecap.KEYS) e.register(k); });
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.RenderGuiEvent.Post e) ->
+                com.cosmiclogic.deathbreakdown.client.ClientHud.render(e.getGuiGraphics()));
         NeoForge.EVENT_BUS.addListener((InputEvent.Key e) -> ClientRecap.onKey());
         NeoForge.EVENT_BUS.addListener((ScreenEvent.Init.Post e) -> ClientRecap.onScreenInit(e.getScreen(), e::addListener));
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut e) -> ClientRecap.clear());

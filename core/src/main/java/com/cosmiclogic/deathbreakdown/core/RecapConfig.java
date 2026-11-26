@@ -39,16 +39,81 @@ public final class RecapConfig {
     public boolean showTip = true;        // one short tip under the summary ("Lava did 89% of the damage.")
     public int historySize = 5;           // recaps kept per player (1-20), browse with < > in the screen
     public boolean saveHistory = true;    // keep them in the world folder so they survive restarts
+    // Added in 1.2.0 ("make it yours"). Every default keeps the 1.1.0 look and behavior.
+    public int updateTicks = 5;
+    public boolean deathButton = true;
+    public String deathButtonCorner = "top_left";
+    public int deathButtonX = 4, deathButtonY = 4;
+    public boolean showDeathMessage = true, showSummary = true, showLegend = true, compact = false, stripes = true;
+    public int panelOpacity = 0;
+    public String colorPreset = "default";
+    private final java.util.EnumMap<Palette.Slot, String> colors = new java.util.EnumMap<Palette.Slot, String>(Palette.Slot.class);
+    public String markerStyle = "off", markerParticle = "dust";
+    public double markerSize = 1.0, markerSpacing = 0.5;
+    public int markerMinutes = 5, markerRange = 64;
+    public boolean markerUntilReached = true;
+    public boolean hudEnabled = false;
+    public String hudCorner = "top_right";
+    public int hudX = 4, hudY = 4, hudScale = 100, hudOpacity = 50;
+    public boolean hudBackground = true, hudShowKiller = true, hudShowDistance = true, hudShowTime = true,
+            hudShowCoords = false, hudCompact = false;
+    public int hudMinutes = 10;
+    public boolean soundOnOpen = false;
+    public String soundKind = "page";
+    public int soundVolume = 100;
 
     /** What was wrong with the file when it was loaded (empty if nothing). Shown in the log and by /deathbreakdown reload. */
     public final List<String> problems = new ArrayList<String>();
 
     public long windowMs() { return windowSeconds * 1000L; }
 
-    public static RecapConfig load(File file) {
+    /** The hex code typed for this color ("" = use the preset). */
+    public String colorOverride(Palette.Slot s) {
+        String v = colors.get(s);
+        return v == null ? "" : v;
+    }
+
+    public void setColorOverride(Palette.Slot s, String hex) {
+        if (hex == null || hex.isEmpty()) colors.remove(s); else colors.put(s, hex);
+    }
+
+    /** The colors to draw with right now (preset + the player's own). */
+    public Palette palette() { return Palette.of(this); }
+
+    /** Every setting back to its default ("Reset to defaults"). */
+    public void resetAll() {
+        for (Option o : Option.ALL) o.reset(this);
+    }
+
+    /** A separate copy (the settings screen edits one and only keeps it on Save). */
+    public RecapConfig copy() {
         RecapConfig c = new RecapConfig();
+        for (Option o : Option.ALL) o.set(c, o.get(this));
+        return c;
+    }
+
+    /** Reads the settings from text in the file's format (missing keys keep their defaults). */
+    public static RecapConfig fromProperties(Properties p) {
+        RecapConfig c = new RecapConfig();
+        for (Option o : Option.ALL) {
+            String v = p.getProperty(o.key);
+            if (v == null) continue; // new key: keeps its default and gets written in
+            String problem = o.set(c, v);
+            if (problem != null) c.problems.add(problem);
+        }
+        if (!c.showTime && !c.showSource && !c.showType && !c.showDamage && !c.showArmor && !c.showEnchants
+                && !c.showOther && !c.showHealthLeft) {
+            c.problems.add("every column was turned off: showing \"Hit by\" so the recap isn't empty");
+            c.showSource = true;
+        }
+        return c;
+    }
+
+    public static RecapConfig load(File file) {
         Properties p = new Properties();
+        List<String> early = new ArrayList<String>();
         if (file.isDirectory()) {
+            RecapConfig c = new RecapConfig();
             c.problems.add(file.getName() + " is a folder, not a file: using the defaults");
             return c;
         }
@@ -58,70 +123,50 @@ public final class RecapConfig {
                 r = new InputStreamReader(new FileInputStream(file), UTF8);
                 p.load(r);
             } catch (IOException e) {
-                c.problems.add("couldn't read " + file.getName() + " (" + e.getMessage() + "): using the defaults");
+                early.add("couldn't read " + file.getName() + " (" + e.getMessage() + "): using the defaults");
             } catch (IllegalArgumentException e) {
-                c.problems.add(file.getName() + " has a broken line (" + e.getMessage() + "): using the defaults for it");
+                early.add(file.getName() + " has a broken line (" + e.getMessage() + "): using the defaults for it");
             } finally {
                 if (r != null) try { r.close(); } catch (IOException ignored) {}
             }
         }
-        c.windowSeconds = c.clampInt(p, "windowSeconds", c.windowSeconds, 1, 60);
-        c.showSource = c.bool(p, "showSource", c.showSource);
-        c.showType = c.bool(p, "showType", c.showType);
-        c.showDamage = c.bool(p, "showDamage", c.showDamage);
-        c.showArmor = c.bool(p, "showArmor", c.showArmor);
-        c.showEnchants = c.bool(p, "showEnchants", c.showEnchants);
-        c.showOther = c.bool(p, "showOther", c.showOther);
-        c.showHealthLeft = c.bool(p, "showHealthLeft", c.showHealthLeft);
-        c.showTime = c.bool(p, "showTime", c.showTime);
-        c.hearts = c.bool(p, "hearts", c.hearts);
-        c.openOnDeath = c.bool(p, "openOnDeath", c.openOnDeath);
-        c.chatSummary = c.bool(p, "chatSummary", c.chatSummary);
-        c.showTip = c.bool(p, "showTip", c.showTip);
-        c.historySize = c.clampInt(p, "historySize", c.historySize, 1, 20);
-        c.saveHistory = c.bool(p, "saveHistory", c.saveHistory);
-        if (!c.showTime && !c.showSource && !c.showType && !c.showDamage && !c.showArmor && !c.showEnchants
-                && !c.showOther && !c.showHealthLeft) {
-            c.problems.add("every column was turned off: showing \"Hit by\" so the recap isn't empty");
-            c.showSource = true;
-        }
+        RecapConfig c = fromProperties(p);
+        c.problems.addAll(0, early);
         try { c.save(file); } catch (IOException e) { c.problems.add("couldn't save " + file.getName() + ": " + e.getMessage()); }
         return c;
     }
 
+    /** Writes every setting with a one-line explanation, grouped like the settings screen. */
     public void save(File file) throws IOException {
         File dir = file.getParentFile();
         if (dir != null && !dir.isDirectory() && !dir.mkdirs()) throw new IOException("Can't create " + dir);
-        Writer w = new OutputStreamWriter(new FileOutputStream(file), UTF8);
+        File tmp = new File(file.getPath() + ".tmp");
+        Writer w = new OutputStreamWriter(new FileOutputStream(tmp), UTF8);
         try {
-            w.write("# Death Breakdown settings\n");
-            w.write("# How many seconds before death to include (1-60)\n");
-            w.write("windowSeconds=" + windowSeconds + "\n\n");
-            w.write("# Columns in the recap (true/false)\n");
-            w.write("showTime=" + showTime + "\n");
-            w.write("showSource=" + showSource + "\n");
-            w.write("showType=" + showType + "\n");
-            w.write("showDamage=" + showDamage + "\n");
-            w.write("showArmor=" + showArmor + "\n");
-            w.write("showEnchants=" + showEnchants + "\n");
-            w.write("# Resistance, absorption hearts and shields\n");
-            w.write("showOther=" + showOther + "\n");
-            w.write("showHealthLeft=" + showHealthLeft + "\n\n");
-            w.write("# Show damage in hearts (true) or health points (false)\n");
-            w.write("hearts=" + hearts + "\n\n");
-            w.write("# Open the recap automatically when you die\n");
-            w.write("openOnDeath=" + openOnDeath + "\n");
-            w.write("# Post a one-line summary in chat when you die\n");
-            w.write("chatSummary=" + chatSummary + "\n");
-            w.write("# Show one short tip under the summary, e.g. \"Lava did 89% of the damage.\"\n");
-            w.write("showTip=" + showTip + "\n\n");
-            w.write("# How many of your last deaths to keep (1-20). Browse them with < and > in the recap screen.\n");
-            w.write("historySize=" + historySize + "\n");
-            w.write("# Keep them in the world folder so they survive leaving and restarting\n");
-            w.write("saveHistory=" + saveHistory + "\n");
+            w.write(text());
         } finally {
             w.close();
         }
+        if (!tmp.renameTo(file)) {
+            if (!file.delete() || !tmp.renameTo(file)) throw new IOException("Can't replace " + file);
+        }
+    }
+
+    /** The file's text. */
+    public String text() {
+        StringBuilder b = new StringBuilder();
+        b.append("# Death Breakdown settings. Change them in game: Mods list > Death Breakdown > Config.\n");
+        b.append("# A value that can't be read is replaced by its default (the log says which).\n");
+        for (String page : Option.PAGES) {
+            b.append("\n# ===== ").append(page).append(" =====\n");
+            if (page.equals(Option.COLORS)) b.append("# Presets: default, colorblind, high_contrast, soft, mono. Each color below: a hex code like #FF8800, or blank for the preset's.\n");
+            for (Option o : Option.page(page)) {
+                if (o.kind != Option.Kind.COLOR) b.append("# ").append(o.label).append(": ").append(o.help)
+                        .append(o.kind == Option.Kind.CHOICE ? " (" + String.join(", ", o.choices) + ")" : "").append('\n');
+                b.append(o.key).append('=').append(o.get(this)).append('\n');
+            }
+        }
+        return b.toString();
     }
 
     static boolean bool(String v, boolean def) {
@@ -140,34 +185,5 @@ public final class RecapConfig {
         } catch (NumberFormatException e) {
             return def;
         }
-    }
-
-    private boolean bool(Properties p, String key, boolean def) {
-        String v = p.getProperty(key);
-        boolean out = bool(v, def);
-        if (v != null && !isBoolWord(v)) {
-            problems.add(key + "=" + v.trim() + " isn't true or false: using " + def);
-        }
-        return out;
-    }
-
-    private static boolean isBoolWord(String v) {
-        v = v.trim().toLowerCase(java.util.Locale.ROOT);
-        return v.equals("true") || v.equals("false") || v.equals("yes") || v.equals("no") || v.equals("1") || v.equals("0")
-                || v.equals("on") || v.equals("off");
-    }
-
-    private int clampInt(Properties p, String key, int def, int lo, int hi) {
-        String v = p.getProperty(key);
-        int out = clampInt(v, def, lo, hi);
-        if (v != null) {
-            try {
-                int i = Integer.parseInt(v.trim());
-                if (i != out) problems.add(key + "=" + i + " is outside " + lo + "-" + hi + ": using " + out);
-            } catch (NumberFormatException e) {
-                problems.add(key + "=" + v.trim() + " isn't a number: using " + def);
-            }
-        }
-        return out;
     }
 }

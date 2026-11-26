@@ -127,6 +127,21 @@ public final class SelfTest {
             check(bad.delete(), "test config removed");
             report.append("broken config ok; ");
 
+            // 1.2.0: every setting (good value works, bad value falls back, reset, file round trip) on this version
+            java.util.List<String> settingsFail = com.cosmiclogic.deathbreakdown.core.SettingsCheck.run(dir);
+            check(settingsFail.isEmpty(), "settings: " + settingsFail);
+            com.cosmiclogic.deathbreakdown.core.RecapConfig colored = new com.cosmiclogic.deathbreakdown.core.RecapConfig();
+            com.cosmiclogic.deathbreakdown.core.Option.get("colorTitle").set(colored, "#12AB34");
+            RecapConfig keep = DeathBreakdown.config;
+            DeathBreakdown.config = colored;
+            try {
+                String json = ServerTracker.chatSummary(swarm, true).toString();
+                check(json.contains("12ab34") || json.contains("12AB34") || json.contains("1223476"), "chat uses the title color: " + json);
+            } finally {
+                DeathBreakdown.config = keep;
+            }
+            report.append(com.cosmiclogic.deathbreakdown.core.Option.ALL.size()).append(" settings ok; ");
+
             ServerLevel nether = out.getServer().getLevel(net.minecraft.world.level.Level.NETHER);
             check(nether != null, "nether loaded");
             //#if MC >= 1.19.4

@@ -51,6 +51,18 @@ public final class DeathBreakdown {
         for (String problem : config.problems) LOG.warn("deathbreakdown.properties: {}", problem);
     }
 
+    /** Uses new settings right away and saves them (settings screen, the HUD/marker keys). */
+    public static void applyConfig(RecapConfig c) {
+        config = c;
+        HITS.setWindowMs(c.windowMs());
+        HITS.setHistorySize(c.historySize);
+        try {
+            c.save(configFile());
+        } catch (java.io.IOException e) {
+            LOG.warn("Couldn't save {}: {}", configFile(), e.toString());
+        }
+    }
+
     public static java.io.File configFile() {
         return platform.configDir().resolve(MOD_ID + ".properties").toFile();
     }

@@ -3,6 +3,7 @@ package com.cosmiclogic.deathbreakdown.client;
 import com.cosmiclogic.deathbreakdown.DeathBreakdown;
 import com.cosmiclogic.deathbreakdown.Txt;
 import com.cosmiclogic.deathbreakdown.core.Hit;
+import com.cosmiclogic.deathbreakdown.core.Palette;
 import com.cosmiclogic.deathbreakdown.core.Recap;
 import com.cosmiclogic.deathbreakdown.core.RecapConfig;
 import com.cosmiclogic.deathbreakdown.core.RecapText;
@@ -30,7 +31,8 @@ import java.util.List;
  * Copy puts the recap on the clipboard as text; Settings opens the options.
  */
 public class RecapScreen extends Screen {
-    private static final int ROW_H = 12, PAD = 8;
+    private static final int PAD = 8;
+    private final int ROW_H;
     private static final String SKULL = "☠ ";
 
     private final Screen parent;
@@ -39,6 +41,9 @@ public class RecapScreen extends Screen {
     private final Recap recap;
     private final List<Col> cols;
     private final boolean hearts;
+    private final RecapConfig cfg;
+    private final Palette pal;
+    private final boolean compact;
     private int[] widths;
     private int tableX, tableW, visibleRows, scroll, top, legendY;
     private List<String> summary, legend;
@@ -53,9 +58,15 @@ public class RecapScreen extends Screen {
         this.index = Math.max(0, Math.min(history.size() - 1, index));
         this.recap = history.get(this.index);
         RecapConfig c = DeathBreakdown.config;
+        this.cfg = c;
+        this.pal = c.palette();
+        this.compact = c.compact;
+        this.ROW_H = compact ? 10 : 12;
         this.cols = RecapText.columns(c);
         this.hearts = c.hearts;
     }
+
+    private boolean showMessage() { return cfg.showDeathMessage && !compact; }
 
     //#if MC >= 26.1
     @Override
@@ -92,13 +103,13 @@ public class RecapScreen extends Screen {
     @Override
     protected void init() {
         ClientSelfTest.sawRecapScreen = true;
-        summary = Draw.wrap(font, RecapText.summary(recap, hearts), Math.max(200, width - 40));
+        summary = cfg.showSummary ? Draw.wrap(font, RecapText.summary(recap, hearts), Math.max(200, width - 40)) : new ArrayList<>();
         if (summary.size() > 2) summary = summary.subList(0, 2);
-        tip = DeathBreakdown.config.showTip ? RecapText.tip(recap) : "";
+        tip = cfg.showTip && !compact ? RecapText.tip(recap) : "";
         legend = new ArrayList<>();
         int legendMax = Math.max(120, width - 20);
-        for (String l : RecapText.legendLines(font::width, legendMax)) legend.addAll(Draw.wrap(font, l, legendMax));
-        int y0 = history.size() > 1 ? 42 : 32;
+        if (cfg.showLegend && !compact) for (String l : RecapText.legendLines(font::width, legendMax)) legend.addAll(Draw.wrap(font, l, legendMax));
+        int y0 = headerBottom();
         top = y0 + summary.size() * 10 + (tip.isEmpty() ? 0 : 10) + 8;
 
         widths = new int[cols.size()];
@@ -168,47 +179,60 @@ public class RecapScreen extends Screen {
         }
     }
 
+    /** Where the summary starts: under the title, the "Death n of m" line and the death message (when shown). */
+    private int headerBottom() {
+        int y = 20;
+        if (history.size() > 1) y += 10;
+        if (showMessage()) y += 10;
+        return y + 2;
+    }
+
     private void draw(Draw g, int mx, int my) {
-        g.centered(font, title.getString(), width / 2, 8, 0xFFAA00);
+        g.centered(font, title.getString(), width / 2, 8, pal.get(Palette.Slot.TITLE));
+        int hy = 20;
         if (history.size() > 1) {
             String which = "Death " + (history.size() - index) + " of " + history.size() + " · "
                     + RecapText.ago(recap.timeMs, System.currentTimeMillis());
-            g.centered(font, which, width / 2, 20, 0x777777);
-            g.centered(font, recap.deathMessage, width / 2, 30, 0xAAAAAA);
-        } else {
-            g.centered(font, recap.deathMessage, width / 2, 20, 0xAAAAAA);
+            g.centered(font, which, width / 2, hy, pal.get(Palette.Slot.MUTED));
+            hy += 10;
         }
-        int y0 = history.size() > 1 ? 42 : 32;
-        for (int i = 0; i < summary.size(); i++) g.centered(font, summary.get(i), width / 2, y0 + i * 10, 0xFFFFFF);
-        if (!tip.isEmpty()) g.centered(font, tip, width / 2, y0 + summary.size() * 10, 0xFFDD55);
+        if (showMessage()) g.centered(font, recap.deathMessage, width / 2, hy, pal.get(Palette.Slot.INFO));
+        int y0 = headerBottom();
+        for (int i = 0; i < summary.size(); i++) g.centered(font, summary.get(i), width / 2, y0 + i * 10, pal.get(Palette.Slot.SUMMARY));
+        if (!tip.isEmpty()) g.centered(font, tip, width / 2, y0 + summary.size() * 10, pal.get(Palette.Slot.TIP));
 
         int y = top;
+        if (cfg.panelOpacity > 0) {
+            int a = Math.round(cfg.panelOpacity * 2.55F) << 24;
+            g.fill(tableX - 6, y - 6, tableX + tableW + 6, legendY - 2, a);
+        }
         g.fill(tableX - 2, y - 2, tableX + tableW + 2, y + ROW_H - 2, 0x60000000);
-        drawRow(g, y, i -> cols.get(i).title, i -> 0xAAAAAA, false);
+        drawRow(g, y, i -> cols.get(i).title, i -> pal.get(Palette.Slot.HEADER), false);
         y += ROW_H + 2;
 
         int hovered = -1;
         int end = Math.min(recap.hits.size(), scroll + visibleRows);
         for (int k = scroll; k < end; k++) {
             Hit h = recap.hits.get(k);
-            int bg = h.finalBlow ? 0x55AA6600 : ((k & 1) == 0 ? 0x30000000 : 0x18FFFFFF);
-            g.fill(tableX - 2, y - 2, tableX + tableW + 2, y + ROW_H - 2, bg);
+            int bg = h.finalBlow ? 0x55000000 | pal.get(Palette.Slot.FINAL_ROW)
+                    : !cfg.stripes ? 0 : ((k & 1) == 0 ? 0x30000000 : 0x18FFFFFF);
+            if (bg != 0) g.fill(tableX - 2, y - 2, tableX + tableW + 2, y + ROW_H - 2, bg);
             if (mx >= tableX && mx <= tableX + tableW && my >= y - 2 && my < y + ROW_H - 2) {
                 hovered = k;
                 g.fill(tableX - 2, y - 2, tableX + tableW + 2, y + ROW_H - 2, 0x22FFFFFF);
             }
-            drawRow(g, y, i -> RecapText.cell(cols.get(i), h, recap, hearts), i -> RecapText.color(cols.get(i), h), h.finalBlow);
+            drawRow(g, y, i -> RecapText.cell(cols.get(i), h, recap, hearts), i -> RecapText.color(cols.get(i), h, pal), h.finalBlow);
             y += ROW_H;
         }
         if (recap.hits.size() > visibleRows) {
-            g.text(font, (scroll + 1) + "-" + end + " of " + recap.hits.size() + " (scroll)", tableX, y + 1, 0x777777);
+            g.text(font, (scroll + 1) + "-" + end + " of " + recap.hits.size() + " (scroll)", tableX, y + 1, pal.get(Palette.Slot.MUTED));
             y += ROW_H;
         }
         g.fill(tableX - 2, y, tableX + tableW + 2, y + 1, 0x80FFFFFF);
         y += 3;
-        drawRow(g, y, i -> total(cols.get(i)), i -> 0xFFFFFF, false);
+        drawRow(g, y, i -> total(cols.get(i)), i -> pal.get(Palette.Slot.TOTAL), false);
 
-        for (int i = 0; i < legend.size(); i++) g.centered(font, legend.get(i), width / 2, legendY + i * 10, 0x777777);
+        for (int i = 0; i < legend.size(); i++) g.centered(font, legend.get(i), width / 2, legendY + i * 10, pal.get(Palette.Slot.MUTED));
 
         if (hovered >= 0) {
             Hit h = recap.hits.get(hovered);

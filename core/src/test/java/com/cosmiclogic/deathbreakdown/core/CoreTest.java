@@ -460,6 +460,78 @@ public final class CoreTest {
         eq(0, c.problems.size());
     }
 
+    // ---- 1.2.0 settings ----
+
+    public static void testEverySettingWorksFallsBackAndResets() {
+        File dir = new File("build/coretest");
+        dir.mkdirs();
+        List<String> fail = SettingsCheck.run(dir);
+        yes(fail.isEmpty(), fail.toString());
+        yes(Option.ALL.size() > 60, "settings: " + Option.ALL.size());
+    }
+
+    public static void testDefaultLookIs110() {
+        Recap r = sampleRecap();
+        Palette p = new RecapConfig().palette();
+        for (RecapText.Col c : RecapText.Col.values()) for (Hit h : r.hits) eq(RecapText.color(c, h), RecapText.color(c, h, p));
+        eq(0xFF5555, p.get(Palette.Slot.DAMAGE));
+        eq(0xFFAA00, p.get(Palette.Slot.FINAL_BLOW));
+        eq(0xC08CFF, RecapText.color(RecapText.Col.ENCHANTS, r.hits.get(0), p));
+    }
+
+    public static void testPresetsAndHexColors() {
+        eq(0xFF8800, Palette.parseHex("#FF8800"));
+        eq(0xFF8800, Palette.parseHex("ff8800"));
+        eq(0xFF8800, Palette.parseHex("#f80"));
+        eq(0xFF8800, Palette.parseHex("0xFF8800"));
+        eq(null, Palette.parseHex("#FF88"));
+        eq(null, Palette.parseHex("orange"));
+        eq("#0A0B0C", Palette.hex(0x0A0B0C));
+        RecapConfig c = new RecapConfig();
+        Option.get("colorPreset").set(c, "colorblind");
+        eq(0xE69F00, c.palette().get(Palette.Slot.DAMAGE));
+        Option.get("colorDamage").set(c, "#123456");
+        eq(0x123456, c.palette().get(Palette.Slot.DAMAGE));
+        eq(0x56B4E9, c.palette().get(Palette.Slot.OTHER)); // the rest still from the preset
+        for (String name : Palette.PRESETS) yes(Palette.preset(name) != null, name);
+        eq('c', Palette.nearestLegacy(0xFF5555));
+        eq('6', Palette.nearestLegacy(0xFFAA00));
+        eq('f', Palette.nearestLegacy(0xFEFEFE));
+    }
+
+    public static void testOld110FileKeepsEverything() throws Exception {
+        File f = new File("build/coretest/old110-" + System.nanoTime() + ".properties");
+        java.io.FileOutputStream o = new java.io.FileOutputStream(f);
+        o.write(("windowSeconds=20\nshowArmor=false\nhearts=false\nopenOnDeath=true\nchatSummary=false\nshowTip=false\n"
+                + "historySize=8\nsaveHistory=false\n").getBytes("UTF-8"));
+        o.close();
+        RecapConfig c = RecapConfig.load(f);
+        eq(0, c.problems.size());
+        eq(20, c.windowSeconds);
+        eq(false, c.showArmor);
+        eq(8, c.historySize);
+        eq("off", c.markerStyle);
+        eq(false, c.hudEnabled);
+        String text = new String(java.nio.file.Files.readAllBytes(f.toPath()), "UTF-8");
+        yes(text.contains("windowSeconds=20") && text.contains("markerStyle=off") && text.contains("colorDamage="), text);
+    }
+
+    public static void testOptionClicksWrap() {
+        RecapConfig c = new RecapConfig();
+        Option w = Option.get("windowSeconds");
+        eq("11", w.next(c, false));
+        eq("9", w.next(c, true));
+        w.set(c, "60");
+        eq("1", w.next(c, false));
+        Option m = Option.get("markerStyle");
+        eq("particles", m.next(c, false));
+        eq("beam", m.next(c, true));
+        Option s = Option.get("markerSize");
+        eq("1.25", s.next(c, false));
+        yes(Option.get("hudScale").display(c).endsWith("100%"), Option.get("hudScale").display(c));
+        yes(Option.get("colorDamage").display(c).contains("#FF5555"), Option.get("colorDamage").display(c));
+    }
+
     static Recap sampleRecap() {
         List<Hit> hits = new ArrayList<Hit>();
         hits.add(new Hit(1000, "Skeleton", "Bow", Hit.Kind.PROJECTILE, "arrow", 4, 1.5F, 0.3F, 0, 0, 0, 2.2F, 17.8F, false));

@@ -7,6 +7,7 @@ import com.cosmiclogic.deathbreakdown.core.Recap;
 import com.cosmiclogic.deathbreakdown.core.RecapCodec;
 import com.cosmiclogic.deathbreakdown.core.RecapStore;
 import com.cosmiclogic.deathbreakdown.core.RecapText;
+import com.cosmiclogic.deathbreakdown.core.Palette;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
@@ -142,27 +143,30 @@ public final class ServerTracker {
     public static final int HOVER_HITS = 6;
 
     public static MutableComponent hover(Recap r, boolean hearts) {
-        MutableComponent hover = Txt.lit(DeathBreakdown.NAME).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
-        hover.append(Txt.lit("\n" + r.deathMessage).withStyle(ChatFormatting.GRAY));
+        Palette p = DeathBreakdown.config.palette();
+        MutableComponent hover = Txt.col(DeathBreakdown.NAME, p, Palette.Slot.TITLE, ChatFormatting.GOLD).withStyle(ChatFormatting.BOLD);
+        hover.append(Txt.col("\n" + r.deathMessage, p, Palette.Slot.INFO, ChatFormatting.GRAY));
         String tip = DeathBreakdown.config.showTip ? RecapText.tip(r) : "";
-        if (!tip.isEmpty()) hover.append(Txt.lit("\n" + tip).withStyle(ChatFormatting.YELLOW));
+        if (!tip.isEmpty()) hover.append(Txt.col("\n" + tip, p, Palette.Slot.TIP, ChatFormatting.YELLOW));
         boolean header = true;
         for (String line : RecapText.hoverLines(r, hearts, HOVER_HITS)) {
             if (line.isEmpty()) { header = true; continue; }
-            if (line.startsWith("(")) { hover.append(Txt.lit("\n\n" + line).withStyle(ChatFormatting.DARK_GRAY)); header = true; continue; }
+            if (line.startsWith("(")) { hover.append(Txt.col("\n\n" + line, p, Palette.Slot.MUTED, ChatFormatting.DARK_GRAY)); header = true; continue; }
             if (header) {
-                hover.append(Txt.lit("\n\n" + line).withStyle(line.startsWith("FINAL BLOW") ? ChatFormatting.GOLD : ChatFormatting.WHITE));
+                hover.append(line.startsWith("FINAL BLOW") ? Txt.col("\n\n" + line, p, Palette.Slot.FINAL_BLOW, ChatFormatting.GOLD)
+                        : Txt.col("\n\n" + line, p, Palette.Slot.SOURCE, ChatFormatting.WHITE));
                 header = false;
             } else {
-                hover.append(Txt.lit("\n " + line).withStyle(ChatFormatting.GRAY));
+                hover.append(Txt.col("\n " + line, p, Palette.Slot.INFO, ChatFormatting.GRAY));
             }
         }
         return hover;
     }
 
     public static MutableComponent chatSummary(Recap r, boolean hearts) {
-        return Txt.lit("[" + DeathBreakdown.NAME + "] ").withStyle(ChatFormatting.GOLD)
-                .append(Txt.lit(RecapText.summary(r, hearts)).withStyle(ChatFormatting.WHITE))
+        Palette p = DeathBreakdown.config.palette();
+        return Txt.col("[" + DeathBreakdown.NAME + "] ", p, Palette.Slot.TITLE, ChatFormatting.GOLD)
+                .append(Txt.col(RecapText.summary(r, hearts), p, Palette.Slot.SUMMARY, ChatFormatting.WHITE))
                 .append(Txt.hoverClick(" [details]", RecapText.BLUE, hover(r, hearts), "/deathbreakdown"))
                 .append(Txt.copyClick(" [copy]", RecapText.GRAY, Txt.lit("Copy this recap as text (for Discord or a bug report)"),
                         RecapText.plainText(r, hearts)));

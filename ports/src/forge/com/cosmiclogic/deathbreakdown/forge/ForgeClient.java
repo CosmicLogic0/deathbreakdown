@@ -1,6 +1,7 @@
 package com.cosmiclogic.deathbreakdown.forge;
 
 import com.cosmiclogic.deathbreakdown.client.ClientRecap;
+import com.cosmiclogic.deathbreakdown.client.ClientHud;
 import com.cosmiclogic.deathbreakdown.client.ConfigScreen;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -27,6 +28,7 @@ final class ForgeClient {
     static void init() {
         registerKey();
         registerConfigScreen();
+        registerHud();
         //#if MC >= 1.20.2
         ClientRecap.serverHasMod = () -> {
             net.minecraft.client.multiplayer.ClientPacketListener c = net.minecraft.client.Minecraft.getInstance().getConnection();
@@ -76,19 +78,36 @@ final class ForgeClient {
 
     private static void registerKey() {
         //#if MC >= 26.1
-        RegisterKeyMappingsEvent.BUS.addListener(e -> e.register(ClientRecap.OPEN_KEY));
+        RegisterKeyMappingsEvent.BUS.addListener(e -> { for (net.minecraft.client.KeyMapping k : ClientRecap.KEYS) e.register(k); });
         //#elif MC >= 1.21.6
-        RegisterKeyMappingsEvent.getBus(FMLJavaModLoadingContext.get().getModBusGroup()).addListener(e -> e.register(ClientRecap.OPEN_KEY));
+        RegisterKeyMappingsEvent.getBus(FMLJavaModLoadingContext.get().getModBusGroup()).addListener(e -> { for (net.minecraft.client.KeyMapping k : ClientRecap.KEYS) e.register(k); });
         //#elif MC >= 1.19.1
-        FMLJavaModLoadingContext.get().getModEventBus().addListener((RegisterKeyMappingsEvent e) -> e.register(ClientRecap.OPEN_KEY));
+        FMLJavaModLoadingContext.get().getModEventBus().addListener((RegisterKeyMappingsEvent e) -> { for (net.minecraft.client.KeyMapping k : ClientRecap.KEYS) e.register(k); });
         //#else
         FMLJavaModLoadingContext.get().getModEventBus().addListener((FMLClientSetupEvent e) -> e.enqueueWork(() -> {
-            //#if MC >= 1.18
-            net.minecraftforge.client.ClientRegistry.registerKeyBinding(ClientRecap.OPEN_KEY);
-            //#else
-            net.minecraftforge.fml.client.registry.ClientRegistry.registerKeyBinding(ClientRecap.OPEN_KEY);
-            //#endif
+            for (net.minecraft.client.KeyMapping k : ClientRecap.KEYS) {
+                //#if MC >= 1.18
+                net.minecraftforge.client.ClientRegistry.registerKeyBinding(k);
+                //#else
+                net.minecraftforge.fml.client.registry.ClientRegistry.registerKeyBinding(k);
+                //#endif
+            }
         }));
+        //#endif
+    }
+
+    /** The death HUD is drawn after the rest of the in-game HUD. */
+    private static void registerHud() {
+        //#if MC >= 1.21.6
+        net.minecraftforge.client.event.RenderGuiEvent.Post.BUS.addListener(e -> ClientHud.render(e.getGuiGraphics()));
+        //#elif MC >= 1.20
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.client.event.RenderGuiEvent.Post e) -> ClientHud.render(e.getGuiGraphics()));
+        //#elif MC >= 1.19
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.client.event.RenderGuiEvent.Post e) -> ClientHud.render(e.getPoseStack()));
+        //#else
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.client.event.RenderGameOverlayEvent.Post e) -> {
+            if (e.getType() == net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType.ALL) ClientHud.render(e.getMatrixStack());
+        });
         //#endif
     }
 
