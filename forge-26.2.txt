@@ -1,0 +1,5 @@
+FAIL build=failure server=skipped client=skipped (26.2-65.1.6)
+ClientHud.java:33 cannot find symbol | symbol:   variable hideGui | if (!c.hudEnabled || mc.player == null || ClientRecap.screen(mc) != null || mc.options.hideGui) return;
+ForgeClient.java:102 package net.minecraftforge.client.event.RenderGuiEvent.Post does not exist |  | net.minecraftforge.client.event.RenderGuiEvent.Post.BUS.addListener(e -> ClientHud.render(e.getGuiGraphics()));
+--- mod warnings/errors in the logs: 0 ---
+

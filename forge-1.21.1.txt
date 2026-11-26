@@ -1,0 +1,4 @@
+FAIL build=failure server=skipped client=skipped (1.21.1-52.1.21)
+ForgeClient.java:104 package net.minecraftforge.client.event.RenderGuiEvent does not exist |  | MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.client.event.RenderGuiEvent.Post e) -> ClientHud.render(e.getGuiGraphics()));
+--- mod warnings/errors in the logs: 0 ---
+

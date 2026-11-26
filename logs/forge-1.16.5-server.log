@@ -1,0 +1,83 @@
+================ last 80 log lines ================
+[01:04:52] [Forge Version Check/INFO] [ne.mi.fm.VersionChecker/]: [forge] Starting version check at https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json
+[01:04:53] [Forge Version Check/INFO] [ne.mi.fm.VersionChecker/]: [forge] Found status: AHEAD Current: 36.2.42 Target: null
+[01:04:54] [main/ERROR] [minecraft/PropertyManager]: Failed to load properties from file: server.properties
+[01:04:54] [main/INFO] [mojang/YggdrasilAuthenticationService]: Environment: authHost='https://authserver.mojang.com', accountsHost='https://api.mojang.com', sessionHost='https://sessionserver.mojang.com', servicesHost='https://api.minecraftservices.com', name='PROD'
+[01:04:55] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, destination] and [teleport, targets] with inputs: [Player, 0123, @e, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[01:04:55] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, location] and [teleport, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[01:04:55] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, location] and [teleport, targets] with inputs: [0.1 -0.5 .9, 0 0 0]
+[01:04:55] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, targets] and [teleport, destination] with inputs: [Player, 0123, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[01:04:55] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, targets, location] and [teleport, targets, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[01:04:55] [main/INFO] [minecraft/SimpleReloadableResourceManager]: Reloading ResourceManager: Default, forge-1.16.5-36.2.42-universal.jar, deathbreakdown-1.2.0+forge-1.16.5.jar
+[01:04:55] [Worker-Main-4/INFO] [minecraft/RecipeManager]: Loaded 7 recipes
+[01:04:56] [Worker-Main-4/INFO] [minecraft/AdvancementList]: Loaded 927 advancements
+[01:04:57] [Server thread/INFO] [minecraft/DedicatedServer]: Starting minecraft server version 1.16.5
+[01:04:57] [Server thread/INFO] [minecraft/DedicatedServer]: Loading properties
+[01:04:57] [Server thread/INFO] [minecraft/DedicatedServer]: Default game type: SURVIVAL
+[01:04:57] [Server thread/INFO] [minecraft/MinecraftServer]: Generating keypair
+[01:04:57] [Server thread/INFO] [minecraft/DedicatedServer]: Starting Minecraft server on *:25565
+[01:04:57] [Server thread/INFO] [minecraft/NetworkSystem]: Using epoll channel type
+[01:04:57] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Configuration file ./world/serverconfig/forge-server.toml is not correct. Correcting
+[01:04:57] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server was corrected from null to its default, SimpleCommentedConfig:{}. 
+[01:04:57] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server.removeErroringEntities was corrected from null to its default, false. 
+[01:04:57] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server.removeErroringTileEntities was corrected from null to its default, false. 
+[01:04:57] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server.fullBoundingBoxLadders was corrected from null to its default, false. 
+[01:04:57] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server.zombieBaseSummonChance was corrected from null to its default, 0.1. 
+[01:04:57] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server.zombieBabyChance was corrected from null to its default, 0.05. 
+[01:04:57] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server.logCascadingWorldGeneration was corrected from null to its default, true. 
+[01:04:57] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server.fixVanillaCascading was corrected from null to its default, false. 
+[01:04:57] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server.dimensionUnloadQueueDelay was corrected from null to its default, 0. 
+[01:04:57] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server.treatEmptyTagsAsAir was corrected from null to its default, false. 
+[01:04:57] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server.fixAdvancementLoading was corrected from null to its default, true. 
+[01:04:57] [Server thread/INFO] [minecraft/DedicatedServer]: Preparing level "world"
+[01:05:01] [Server thread/INFO] [minecraft/MinecraftServer]: Preparing start region for dimension minecraft:overworld
+[01:05:02] [Worker-Main-6/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 0%
+[01:05:02] [Worker-Main-5/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 0%
+[01:05:03] [Worker-Main-4/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 0%
+[01:05:03] [Worker-Main-6/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 0%
+[01:05:03] [Worker-Main-4/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 0%
+[01:05:04] [Worker-Main-4/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 2%
+[01:05:04] [Worker-Main-5/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 4%
+[01:05:05] [Worker-Main-6/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 8%
+[01:05:05] [Worker-Main-6/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 11%
+[01:05:06] [Worker-Main-5/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 15%
+[01:05:06] [Worker-Main-4/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 18%
+[01:05:07] [Worker-Main-5/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 22%
+[01:05:07] [Worker-Main-6/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 22%
+[01:05:08] [Worker-Main-6/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 28%
+[01:05:08] [Worker-Main-4/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 28%
+[01:05:09] [Worker-Main-5/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 35%
+[01:05:09] [Worker-Main-6/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 35%
+[01:05:10] [Worker-Main-5/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 35%
+[01:05:10] [Worker-Main-6/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 35%
+[01:05:11] [Worker-Main-5/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 47%
+[01:05:11] [Worker-Main-5/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 47%
+[01:05:12] [Worker-Main-4/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 57%
+[01:05:12] [Worker-Main-6/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 57%
+[01:05:13] [Worker-Main-4/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 63%
+[01:05:14] [Worker-Main-6/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 69%
+[01:05:15] [Worker-Main-4/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 74%
+[01:05:15] [Worker-Main-4/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 74%
+[01:05:15] [Worker-Main-4/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 84%
+[01:05:17] [Worker-Main-6/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 88%
+[01:05:17] [Worker-Main-6/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 88%
+[01:05:17] [Worker-Main-6/INFO] [minecraft/LoggingChunkStatusListener]: Preparing spawn area: 88%
+[01:05:17] [Server thread/INFO] [minecraft/LoggingChunkStatusListener]: Time elapsed: 15176 ms
+[01:05:17] [Server thread/INFO] [minecraft/DedicatedServer]: Done (19.609s)! For help, type "help"
+[01:05:22] [Server thread/INFO] [Death Breakdown/]: Death Breakdown selftest PASS: environment ok (fall); mob + weapon ok; chat ok; packet ok; history + world save ok; hover capped (34 lines); broken config ok; 77 settings ok; nether ok; config ok (window 10s, history 5)
+[01:05:22] [Server thread/INFO] [minecraft/DedicatedServer]: Death Breakdown selftest PASS
+[01:05:30] [Server thread/INFO] [minecraft/DedicatedServer]: Stopping the server
+[01:05:30] [Server thread/INFO] [minecraft/MinecraftServer]: Stopping server
+[01:05:31] [Server thread/INFO] [minecraft/MinecraftServer]: Saving players
+[01:05:31] [Server thread/INFO] [minecraft/MinecraftServer]: Saving worlds
+[01:05:31] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[01:05:31] [Server thread/INFO] [minecraft/ChunkManager]: ThreadedAnvilChunkStorage (world): All chunks are saved
+[01:05:31] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[01:05:31] [Server thread/INFO] [minecraft/ChunkManager]: ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[01:05:31] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[01:05:31] [Server thread/INFO] [minecraft/ChunkManager]: ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[01:05:31] [Server thread/INFO] [minecraft/ChunkManager]: ThreadedAnvilChunkStorage (world): All chunks are saved
+[01:05:31] [Server thread/INFO] [minecraft/ChunkManager]: ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[01:05:31] [Server thread/INFO] [minecraft/ChunkManager]: ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+===================================================
+PASS: server started, mods loaded with no errors.

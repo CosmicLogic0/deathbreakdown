@@ -1,0 +1,4 @@
+FAIL build=failure server=skipped client=skipped (1.18.2-40.3.12)
+ConfigScreen.java:73 cannot find symbol | symbol:   method rebuildWidgets() | rebuildWidgets();
+--- mod warnings/errors in the logs: 0 ---
+

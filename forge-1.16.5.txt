@@ -1,0 +1,6 @@
+PASS build+server+selftest+client+client-selftest (1.16.5-36.2.42)
+--- mod warnings/errors in the logs: 4 ---
+[01:05:48] [main/WARN]: Configuration file /home/runner/work/deathbreakdown/deathbreakdown/run/config/fml.toml is not correct. Correcting
+[01:05:59] [modloading-worker-3/WARN]: Configuration file /home/runner/work/deathbreakdown/deathbreakdown/run/config/forge-client.toml is not correct. Correcting
+[01:05:59] [modloading-worker-3/WARN]: Configuration file /home/runner/work/deathbreakdown/deathbreakdown/run/config/forge-common.toml is not correct. Correcting
+[01:06:12] [Server thread/WARN]: Configuration file /home/runner/work/deathbreakdown/deathbreakdown/run/saves/New World/serverconfig/forge-server.toml is not correct. Correcting

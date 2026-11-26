@@ -1,0 +1,4 @@
+FAIL build=failure server=skipped client=skipped (26.2.0.95)
+ClientHud.java:33 cannot find symbol | symbol:   variable hideGui | if (!c.hudEnabled || mc.player == null || ClientRecap.screen(mc) != null || mc.options.hideGui) return;
+--- mod warnings/errors in the logs: 0 ---
+
